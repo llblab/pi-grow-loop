@@ -1,0 +1,52 @@
+{
+  "name": "@llblab/pi-grow-loop",
+  "version": "0.1.0",
+  "private": false,
+  "description": "Bounded product growth loop extension and skills for Pi.",
+  "keywords": [
+    "pi-package",
+    "pi-extension",
+    "grow-loop",
+    "automation",
+    "skills"
+  ],
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/llblab/pi-grow-loop.git"
+  },
+  "homepage": "https://github.com/llblab/pi-grow-loop",
+  "bugs": {
+    "url": "https://github.com/llblab/pi-grow-loop/issues"
+  },
+  "engines": {
+    "node": ">=22.19.0"
+  },
+  "scripts": {
+    "check": "node --experimental-strip-types -e \"await import('./index.ts'); console.log('pi-grow-loop: extension import ok')\"",
+    "test": "node --experimental-strip-types --test test/*.test.ts",
+    "pack:dry": "npm pack --dry-run",
+    "validate": "npm run test && npm run check && npm run pack:dry"
+  },
+  "files": [
+    "index.ts",
+    "skills",
+    "README.md",
+    "AGENTS.md",
+    "BACKLOG.md",
+    "CHANGELOG.md"
+  ],
+  "pi": {
+    "extensions": [
+      "./index.ts"
+    ],
+    "skills": [
+      "./skills"
+    ]
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*",
+    "typebox": "*"
+  }
+}
