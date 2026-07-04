@@ -73,7 +73,7 @@ grow_loop tool = schedule next visible iteration
 while-true skill = perform one useful iteration
 ```
 
-No start commands. No stop commands. No arguments. No budgets. No hidden process. The agent calls `grow_loop` only when the Grow Loop skill decides useful work remains. The skill must stop calling the tool after an explicit user stop request until the user explicitly restarts Grow Loop.
+No slash start/stop commands. No arguments. No budgets. No hidden process. Plain operator prompts are interpreted by the runtime and skills. The agent calls `grow_loop` only when the Grow Loop skill decides useful work remains. The skill must stop calling the tool after clear continuation-break intent until the user explicitly restarts Grow Loop.
 
 The tool first defers until Pi is idle and no user messages are pending. During that deferred state, status shows `loop ∞N` with the iteration number in warning color as a quiet hint that another loop prompt is armed but not queued yet. Once idle, the tool shows a `loop 3.0s → 0.1s` countdown, then sends the compact trigger prompt `while true | grow loop`. While an iteration is running, status shows `loop ∞N` with the iteration number dimmed; `N` is monotonic across pauses, cancellations, stops, and restarts in the current extension instance. When no loop turn is active, loop status is hidden to preserve status-line width.
 
@@ -215,7 +215,7 @@ The loop continues only when the agent can show evidence that another local, saf
 
 ## Release Stance
 
-This component is suitable for an experimental `0.1.x` release. Keep the runtime surface intentionally small: one no-argument `grow_loop` tool, bundled skills for semantics, and no slash-command, budget, cycle-count, or hidden-process control layer. The package uses a simple source-TS shape: `pi.extensions` points at `./index.ts` and `pi.skills` points at `./skills`.
+This component is suitable for experimental dogfooding as of `0.2.x`. Keep the runtime surface intentionally small: one no-argument `grow_loop` tool, bundled skills for semantics, and no slash-command, budget, cycle-count, or hidden-process control layer. The package uses a simple source-TS shape: `pi.extensions` points at `./index.ts` and `pi.skills` points at `./skills`.
 
 ## Release Smoke Checklist
 
