@@ -41,9 +41,9 @@ It belongs to the loop-engineering family of agent workflows, but favors visible
 
 It provides one runtime tool:
 
-- `grow_loop` — schedules the next visible Grow Loop iteration after a fixed 3-second operator-interrupt grace countdown. It takes no arguments.
+- `grow_loop` — schedules the next visible Grow Loop iteration. It takes no arguments, waits until Pi is idle and no user messages are pending, then starts the fixed 3-second operator-interrupt grace countdown.
 
-There is no slash-command control surface. Plain stop prompts such as `stop` set stopped status and let the Grow Loop skill stop semantically without resetting the monotonic loop counter. Esc/abort also clears any pending grace-delay timer through the active tool abort signal.
+There is no slash-command control surface. Plain stop prompts such as `stop` set stopped status and let the Grow Loop skill stop semantically without resetting the monotonic loop counter. Esc/abort clears deferred scheduling or pending grace-delay timers through the active tool abort signal.
 
 ## Skill Surface
 
@@ -75,7 +75,7 @@ while-true skill = perform one useful iteration
 
 No start commands. No stop commands. No arguments. No budgets. No hidden process. The agent calls `grow_loop` only when the Grow Loop skill decides useful work remains. The skill must stop calling the tool after an explicit user stop request until the user explicitly restarts Grow Loop.
 
-The tool waits 3 seconds, shows a `loop 3.0s → 0.1s` countdown in the status line, then sends the compact trigger prompt `while true | grow loop`. While an iteration is running, status shows `loop ∞N`; `N` is monotonic across pauses, cancellations, stops, and restarts in the current extension instance. When no loop turn is active, loop status is hidden to preserve status-line width.
+The tool first defers until Pi is idle and no user messages are pending. During that deferred state, status shows `loop ∞N` with the iteration number in warning color as a quiet hint that another loop prompt is armed but not queued yet. Once idle, the tool shows a `loop 3.0s → 0.1s` countdown, then sends the compact trigger prompt `while true | grow loop`. While an iteration is running, status shows `loop ∞N` with the iteration number dimmed; `N` is monotonic across pauses, cancellations, stops, and restarts in the current extension instance. When no loop turn is active, loop status is hidden to preserve status-line width.
 
 ## Loop Rhythm
 
@@ -84,9 +84,10 @@ User: go / continue / while true
 Agent loads grow-loop skill
 Grow Loop decides to run
 Agent calls grow_loop()
+Tool arms a deferred iteration and waits for Pi to become idle
 Tool shows countdown
 Operator may interrupt during the grace window
-Tool sends `while true | grow loop` unless a user message is pending
+Tool sends `while true | grow loop`
 Agent performs one bounded while-true iteration
 Agent reports evidence
 Grow Loop decides: schedule again or stop with proof
@@ -106,9 +107,9 @@ Grow Loop should stop when:
 - Validation regresses enough to require a strategy change.
 - The operator asks to stop; after that, the skill must not call `grow_loop` again until an explicit restart request.
 
-Ordinary user interjection cancels any pending loop schedule and hides loop status without entering stopped state. This makes status visibility an emergent mode indicator: if `loop 3.0s` or `loop ∞N` is visible, Grow Loop is actively carrying the rhythm; if the operator takes the turn, the loop indicator disappears.
+Ordinary user interjection cancels any pending loop schedule and hides loop status without entering stopped state. This makes status visibility an emergent mode indicator: if warning-colored `loop ∞N`, `loop 3.0s`, or dim `loop ∞N` is visible, Grow Loop is actively carrying the rhythm; if the operator takes the turn, the loop indicator disappears.
 
-A stop prompt or Esc abort clears pending timers and resets visible loop state, but it cannot recall a `deliverAs: "followUp"` message that Pi has already queued. If that queued prompt still arrives, the runtime injects a no-op stop instruction and the Grow Loop skill must treat the prior stop request as authoritative: do no work and do not call `grow_loop` again.
+A stop prompt clears pending timers and enters stopped loop state. Esc abort clears deferred scheduling or pending grace-delay timers and hides loop status without marking the loop stopped. Neither can recall a `deliverAs: "followUp"` message that Pi has already queued. If that queued prompt still arrives after an explicit stop, the runtime injects a no-op stop instruction and the Grow Loop skill must treat the prior stop request as authoritative: do no work and do not call `grow_loop` again.
 
 ## Compared With Goal Commands
 

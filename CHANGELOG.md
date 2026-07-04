@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.1: Idle-Deferred Scheduling Hotfix
+
+- [Runtime] Changed `grow_loop` scheduling to wait until Pi is idle and no user messages are pending before starting the 3-second grace countdown or queueing the next `while true | grow loop` prompt. Impact: active agent work and operator interjections keep priority over the next loop iteration.
+- [UX] Added a deferred-schedule status state: `loop ∞N` uses warning color while the next iteration is armed but not yet counting down, then switches to the countdown and dim running state at the appropriate phases. Impact: operators get a quiet visible hint that a future loop prompt is pending.
+- [Controls] Made Esc/abort cancel deferred scheduling or grace-delay timers without entering stopped state, while explicit stop prompts still set stopped state and protect already queued loop prompts with no-op guidance.
+- [Docs] Updated README and project context to describe idle-deferred scheduling, deferred warning status, and the refined Esc/stop split.
+
 ## 0.1.0: Initial Release
 
 - [Release] Completed live Grow Loop dogfooding against this repository: the extension selected a backlog task, executed release-readiness validation, reconciled context, and returned to a clean backlog.

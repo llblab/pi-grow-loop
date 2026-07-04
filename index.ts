@@ -8,15 +8,14 @@ const STATUS_KEY = "pi-grow-loop";
 const DEFAULT_FOLLOW_UP_DELAY_MS = 3000;
 const DEFAULT_COUNTDOWN_TICK_MS = 100;
 
-const STOP_INPUT_RE =
-  /^(stop)(\s+(grow\s*loop|while\s*true|loop))?[.!?\s]*$/iu;
+const STOP_INPUT_RE = /^(stop)(\s+(grow\s*loop|while\s*true|loop))?[.!?\s]*$/iu;
 const START_INPUT_RE =
   /^(go|continue|do it|grow\s*loop|while\s*true)(\s+(grow\s*loop|while\s*true|loop))?[.!?\s]*$/iu;
 
 type Timer = ReturnType<typeof setTimeout> & { unref?: () => void };
 type PendingIteration = {
-  timeout: Timer;
   interval: Timer;
+  timeout?: Timer;
   cleanup?: () => void;
 };
 
@@ -57,6 +56,14 @@ function statusRunning(ctx: ExtensionContext, iteration: number) {
   );
 }
 
+function statusDeferred(ctx: ExtensionContext, iteration: number) {
+  const theme = ctx.ui.theme;
+  ctx.ui.setStatus(
+    STATUS_KEY,
+    theme.fg("accent", "loop") + theme.fg("warning", ` ∞${iteration}`),
+  );
+}
+
 function statusText(ctx: ExtensionContext, text: string) {
   ctx.ui.setStatus(STATUS_KEY, ctx.ui.theme.fg("dim", text));
 }
@@ -84,28 +91,35 @@ function scheduleIteration(
   options: Required<GrowLoopOptions>,
   cleanup?: () => void,
 ): PendingIteration {
-  const startedAt = Date.now();
-  statusCountdown(ctx, options.followUpDelayMs / 1000);
+  let timeout: Timer | undefined;
+  let countdownStartedAt: number | undefined;
+  statusDeferred(ctx, iteration);
   const interval = setInterval(() => {
-    const elapsed = Date.now() - startedAt;
+    if (!countdownStartedAt) {
+      if (!ctx.isIdle() || ctx.hasPendingMessages()) return;
+      countdownStartedAt = Date.now();
+      statusCountdown(ctx, options.followUpDelayMs / 1000);
+      timeout = setTimeout(() => {
+        clearPending();
+        if (ctx.hasPendingMessages()) {
+          statusText(ctx, "loop paused");
+          ctx.ui.notify(
+            "Grow Loop paused because a user message is pending",
+            "info",
+          );
+          return;
+        }
+        markStarted();
+        sendIteration(pi, ctx, iteration);
+      }, options.followUpDelayMs) as Timer;
+      timeout.unref?.();
+      return;
+    }
+    const elapsed = Date.now() - countdownStartedAt;
     const remainingMs = Math.max(options.followUpDelayMs - elapsed, 0);
     if (remainingMs > 0) statusCountdown(ctx, remainingMs / 1000);
   }, options.countdownTickMs) as Timer;
-  const timeout = setTimeout(() => {
-    clearPending();
-    if (ctx.hasPendingMessages()) {
-      statusText(ctx, "loop paused");
-      ctx.ui.notify(
-        "Grow Loop paused because a user message is pending",
-        "info",
-      );
-      return;
-    }
-    markStarted();
-    sendIteration(pi, ctx, iteration);
-  }, options.followUpDelayMs) as Timer;
   interval.unref?.();
-  timeout.unref?.();
   return { timeout, interval, cleanup };
 }
 
@@ -125,7 +139,7 @@ export default function growLoopExtension(
   let pendingIteration: PendingIteration | undefined;
   const clearPending = () => {
     if (!pendingIteration) return;
-    clearTimeout(pendingIteration.timeout);
+    if (pendingIteration.timeout) clearTimeout(pendingIteration.timeout);
     clearInterval(pendingIteration.interval);
     pendingIteration.cleanup?.();
     pendingIteration = undefined;
@@ -194,7 +208,7 @@ export default function growLoopExtension(
       clearPending();
       iteration += 1;
       const nextIteration = iteration;
-      const abortPending = () => stopLoopStatus(ctx);
+      const abortPending = () => hideLoopStatus(ctx);
       signal?.addEventListener("abort", abortPending, { once: true });
       pendingIteration = scheduleIteration(
         pi,
@@ -209,7 +223,7 @@ export default function growLoopExtension(
         content: [
           {
             type: "text",
-            text: `\nGrow Loop iteration #${nextIteration} scheduled after ${options.followUpDelayMs / 1000}s grace delay`,
+            text: `\nGrow Loop iteration #${nextIteration} deferred until idle, then scheduled after ${options.followUpDelayMs / 1000}s grace delay`,
           },
         ],
         details: { iteration: nextIteration, delayMs: options.followUpDelayMs },
