@@ -39,9 +39,9 @@ It belongs to the loop-engineering family of agent workflows, but favors visible
 
 ## Runtime Surface
 
-It provides one runtime tool:
+It provides one runtime tool for continuation only:
 
-- `grow_loop` — schedules the next visible Grow Loop iteration. It takes no arguments, waits until Pi is idle and no user messages are pending, then starts the fixed 3-second operator-interrupt grace countdown.
+- `grow_loop` — schedules the next visible Grow Loop iteration after the current bounded slice has produced evidence and the Grow Loop skill decides useful work remains. It is not an entry point. It takes no arguments, waits until Pi is idle and no user messages are pending, then starts the fixed 3-second operator-interrupt grace countdown.
 
 There is no slash-command control surface. Plain stop and pause prompts such as `stop`, `stop grow loop`, `pause`, and `pause grow loop` set a latched stopped/paused status and let the Grow Loop skill stop semantically without resetting the monotonic loop counter. Ordinary operator interjection cancels pending rhythm and hides status without latching a stop. Esc/abort clears deferred scheduling or pending grace-delay timers through the active tool abort signal without becoming a durable stop latch.
 
@@ -68,12 +68,12 @@ If the current focus does not reveal a trustworthy work surface, the loop should
 ## Mental Model
 
 ```text
-grow-loop skill = should we continue?
-grow_loop tool = schedule next visible iteration
+grow-loop skill = entry point and continuation decision
 while-true skill = perform one useful iteration
+grow_loop tool = schedule the next visible iteration only
 ```
 
-No slash start/stop commands. No arguments. No budgets. No hidden process. Plain operator prompts are interpreted by the runtime and skills. The agent calls `grow_loop` only when the Grow Loop skill decides useful work remains. The skill must stop calling the tool after clear continuation-break intent until the user explicitly restarts Grow Loop.
+No slash start/stop commands. No tool entry point. No arguments. No budgets. No hidden process. Plain operator prompts are interpreted by the runtime and skills. The agent calls `grow_loop` only after a skill-led iteration when the Grow Loop skill decides useful work remains. The skill must stop calling the tool after clear continuation-break intent until the user explicitly restarts Grow Loop.
 
 The tool first defers until Pi is idle and no user messages are pending. During that deferred state, status shows `loop ∞N` with the iteration number in warning color as a quiet hint that another loop prompt is armed but not queued yet. Once idle, the tool shows a `loop 3.0s → 0.1s` countdown, then sends the compact trigger prompt `while true | grow loop`. While an iteration is running, status shows `loop ∞N` with the iteration number dimmed; `N` is monotonic across pauses, cancellations, stops, and restarts in the current extension instance. When no loop turn is active, loop status is hidden to preserve status-line width.
 
@@ -82,15 +82,14 @@ The tool first defers until Pi is idle and no user messages are pending. During 
 ```text
 User: go / continue / while true
 Agent loads grow-loop skill
-Grow Loop decides to run
-Agent calls grow_loop()
-Tool arms a deferred iteration and waits for Pi to become idle
+Grow Loop identifies a trustworthy work surface
+Agent performs one bounded while-true iteration
+Agent reports compact evidence
+Grow Loop decides: stop with proof or call grow_loop()
+Tool arms a deferred follow-up and waits for Pi to become idle
 Tool shows countdown
 Operator may interrupt during the grace window
-Tool sends `while true | grow loop`
-Agent performs one bounded while-true iteration
-Agent reports evidence
-Grow Loop decides: schedule again or stop with proof
+Tool sends `while true | grow loop` for the next visible iteration
 ```
 
 The rhythm is intentionally visible. Every cycle is a normal Pi turn, not a hidden process.
@@ -137,7 +136,7 @@ Normal continuation:
 ```text
 User: grow loop
 Agent: closes one backlog slice, validates, reports evidence, calls grow_loop
-Runtime: loop ∞1 → loop 3.0s → while true | grow loop
+Runtime: after evidence, grow_loop schedules loop ∞1 → loop 3.0s → while true | grow loop
 ```
 
 Stop during countdown:

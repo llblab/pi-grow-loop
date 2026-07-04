@@ -78,6 +78,22 @@ function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+async function waitFor(assertion: () => void, timeoutMs = 100) {
+  const startedAt = Date.now();
+  let lastError: unknown;
+  while (Date.now() - startedAt < timeoutMs) {
+    try {
+      assertion();
+      return;
+    } catch (error) {
+      lastError = error;
+      await wait(5);
+    }
+  }
+  if (lastError) throw lastError;
+  assertion();
+}
+
 afterEach(() => {
   mock.restoreAll();
 });
@@ -124,10 +140,11 @@ describe("grow_loop tool runtime", () => {
     const harness = createHarness({ idle: true });
     const result = await harness.executeTool();
     assert.equal(result.details.iteration, 1);
-    await wait(25);
-    assert.deepEqual(harness.sent, [
-      { content: "while true | grow loop", options: undefined },
-    ]);
+    await waitFor(() =>
+      assert.deepEqual(harness.sent, [
+        { content: "while true | grow loop", options: undefined },
+      ]),
+    );
     assert.equal(harness.latestStatus(), "loop ∞1");
   });
   it("round-trips a delivered loop prompt through host hooks before the next schedule", async () => {

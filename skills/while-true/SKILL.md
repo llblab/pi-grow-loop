@@ -110,12 +110,12 @@ Rules:
 
 Backlog sync operations:
 
-- **Close** when the exit criteria are satisfied in reality
-- **Narrow** when part of the task is done and the remainder is smaller/clearer than before
-- **Split** when one vague item turned into multiple independently executable tasks
-- **Retarget** when reality showed the original wording was aimed at the wrong remaining work
-- **Defer** when the work remains valid but is no longer the best next slice
-- **Move to blocked/gated** when the remaining work now depends on an external condition
+- **Close**: when the exit criteria are satisfied in reality
+- **Narrow**: when part of the task is done and the remainder is smaller/clearer than before
+- **Split**: when one vague item turned into multiple independently executable tasks
+- **Retarget**: when reality showed the original wording was aimed at the wrong remaining work
+- **Defer**: when the work remains valid but is no longer the best next slice
+- **Move to blocked/gated**: when the remaining work now depends on an external condition
 
 Deduplication:
 
@@ -181,11 +181,11 @@ Long loops often reach a point where local implementation is complete but the re
 
 Choose the cheapest rung that can falsify the current slice, then climb only as needed:
 
-1. focused checks for the changed surface
-2. type/build checks
-3. broader unit/integration test suites
-4. project context/docs validators
-5. live/manual smoke verification for transport, credentials, remote APIs, UI clients, or other environment-shaped behavior
+1. Focused checks for the changed surface
+2. Type/build checks
+3. Broader unit/integration test suites
+4. Project context/docs validators
+5. Live/manual smoke verification for transport, credentials, remote APIs, UI clients, or other environment-shaped behavior
 
 A slice may be **locally complete** when the relevant local rungs pass, but it is not fully done if a required live/manual rung remains unverified.
 
