@@ -13,7 +13,9 @@ const DEFAULT_FOLLOW_UP_DELAY_MS = 3000;
 const DEFAULT_COUNTDOWN_TICK_MS = 100;
 
 const STOP_INPUT_RE =
-  /^(stop|pause)(\s+(grow\s*loop|while\s*true|loop))?[.!?\s]*$/iu;
+  /^(?:(?:please\s+)?(?:stop|pause)(?:\s+(?:grow\s*loop|while\s*true|loop))?(?:\s+please)?|cancel\s+(?:grow\s*loop|while\s*true|loop))[.!?\s]*$/iu;
+const PAUSE_INPUT_RE =
+  /^(?:please\s+)?pause(?:\s+(?:grow\s*loop|while\s*true|loop))?(?:\s+please)?[.!?\s]*$/iu;
 const START_INPUT_RE =
   /^(go|continue|do it|grow\s*loop|while\s*true)(\s+(grow\s*loop|while\s*true|loop))?[.!?\s]*$/iu;
 
@@ -35,6 +37,10 @@ export function buildGrowLoopPrompt(): string {
 
 export function isStopInput(text: string): boolean {
   return STOP_INPUT_RE.test(text.trim());
+}
+
+export function isPauseInput(text: string): boolean {
+  return PAUSE_INPUT_RE.test(text.trim());
 }
 
 export function isStartInput(text: string): boolean {
@@ -165,10 +171,7 @@ export default function growLoopExtension(
   const stopLoopStatus = (ctx: ExtensionContext, text: string) => {
     clearPending();
     stopRequested = true;
-    statusText(
-      ctx,
-      /^pause/i.test(text.trim()) ? "loop paused" : "loop stopped",
-    );
+    statusText(ctx, isPauseInput(text) ? "loop paused" : "loop stopped");
   };
   const resumeLoopStatus = () => {
     stopRequested = false;

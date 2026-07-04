@@ -113,16 +113,16 @@ A stop prompt clears pending timers and enters stopped loop state. A pause promp
 
 ## Runtime State Machine
 
-| State | Status | Trigger | Cancellation | Latch | Can call `grow_loop`? |
-|---|---|---|---|---|---|
-| `hidden` | none | No active rhythm or status was cleared | none | no | yes, if skill says work remains |
-| `deferred` | `loop ∞N` warning | `grow_loop` called while waiting for idle/no pending messages | stop, pause, interjection, Esc/abort, shutdown, reschedule | no unless stop/pause | yes, reschedule replaces handle |
-| `countdown` | `loop 3.0s` | Pi is idle and grace delay has started | stop, pause, interjection, Esc/abort, shutdown, reschedule | no unless stop/pause | yes, reschedule replaces handle |
-| `running` | `loop ∞N` dim | Tool sent the compact loop prompt | next operator input clears status if not extension-originated | no | yes after bounded iteration evidence |
-| `interjected` | none | Ordinary operator input during deferred/countdown/running rhythm | pending rhythm is cancelled | no | yes, if explicitly resumed or skill continues safely |
-| `stopped` | `loop stopped` | `stop` / `stop grow loop` / `stop while true` | explicit restart phrase clears latch | yes | no until restart |
-| `paused` | `loop paused` | `pause` / `pause grow loop` / `pause while true` | explicit restart phrase clears latch | yes | no until restart |
-| `queued-after-stop` | `loop stopped` or `loop paused` | A follow-up prompt was already queued before stop/pause | runtime injects no-op instruction | yes | no |
+| State               | Status                          | Trigger                                                          | Cancellation                                                  | Latch                | Can call `grow_loop`?                                |
+| ------------------- | ------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------- | -------------------- | ---------------------------------------------------- |
+| `hidden`            | none                            | No active rhythm or status was cleared                           | none                                                          | no                   | yes, if skill says work remains                      |
+| `deferred`          | `loop ∞N` warning               | `grow_loop` called while waiting for idle/no pending messages    | stop, pause, interjection, Esc/abort, shutdown, reschedule    | no unless stop/pause | yes, reschedule replaces handle                      |
+| `countdown`         | `loop 3.0s`                     | Pi is idle and grace delay has started                           | stop, pause, interjection, Esc/abort, shutdown, reschedule    | no unless stop/pause | yes, reschedule replaces handle                      |
+| `running`           | `loop ∞N` dim                   | Tool sent the compact loop prompt                                | next operator input clears status if not extension-originated | no                   | yes after bounded iteration evidence                 |
+| `interjected`       | none                            | Ordinary operator input during deferred/countdown/running rhythm | pending rhythm is cancelled                                   | no                   | yes, if explicitly resumed or skill continues safely |
+| `stopped`           | `loop stopped`                  | `stop` / `stop grow loop` / `stop while true`                    | explicit restart phrase clears latch                          | yes                  | no until restart                                     |
+| `paused`            | `loop paused`                   | `pause` / `pause grow loop` / `pause while true`                 | explicit restart phrase clears latch                          | yes                  | no until restart                                     |
+| `queued-after-stop` | `loop stopped` or `loop paused` | A follow-up prompt was already queued before stop/pause          | runtime injects no-op instruction                             | yes                  | no                                                   |
 
 ## Dogfooding Protocol
 
@@ -187,14 +187,14 @@ Agent: closed release checklist, npm run validate passed, remaining npm publish 
 
 Goal-command workflows usually start from an explicit declarative objective, then ask the model to plan and execute toward that objective. `pi-grow-loop` starts from existing project truth instead: backlog, docs, tests, repository state, and the last checkpoint. It does not replace goal commands; it provides a smaller rhythm for continuing known work without creating a new top-level command surface.
 
-| Dimension | `/goal` command workflow | `pi-grow-loop` |
-|---|---|---|
-| Entry point | User declares a high-level goal | User asks to continue useful work |
-| Planning source | Fresh goal decomposition | Existing backlog, docs, tests, and repo reality |
-| Runtime shape | Goal session or command mode | Normal visible Pi turns |
-| Control surface | Dedicated goal command | One no-argument `grow_loop` tool |
-| Stop model | Goal completion or interruption | Semantic stop proof after each bounded slice |
-| Best fit | New initiatives with a clear declared objective | Ongoing repository improvement and release preparation |
+| Dimension       | `/goal` command workflow                        | `pi-grow-loop`                                         |
+| --------------- | ----------------------------------------------- | ------------------------------------------------------ |
+| Entry point     | User declares a high-level goal                 | User asks to continue useful work                      |
+| Planning source | Fresh goal decomposition                        | Existing backlog, docs, tests, and repo reality        |
+| Runtime shape   | Goal session or command mode                    | Normal visible Pi turns                                |
+| Control surface | Dedicated goal command                          | One no-argument `grow_loop` tool                       |
+| Stop model      | Goal completion or interruption                 | Semantic stop proof after each bounded slice           |
+| Best fit        | New initiatives with a clear declared objective | Ongoing repository improvement and release preparation |
 
 ## What It Is Not
 

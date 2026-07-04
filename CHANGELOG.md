@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.1: Runtime Prompt Polish
+
+- [Controls] Added a conservative allowlist for polite continuation-break prompts: `please stop`, `stop please`, `please pause`, `pause please`, `cancel loop`, and `cancel grow loop`.
+- [Tests] Covered polite stop/pause/cancel latching, queued prompt no-op injection, and ordinary interjection non-latching behavior.
+
 ## 0.2.0: Dogfood-Ready Runtime
 
 - [Runtime] Fixed grace-countdown timeout ownership so cancellation paths clear both the countdown interval and the already-created send timeout through the same pending iteration handle.
