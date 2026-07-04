@@ -31,4 +31,5 @@ test("auto-discovered source checkout contributes co-located skills", async () =
   assert.deepEqual(getExistingExtensionSkillPaths(new URL("../index.ts", import.meta.url).href), [
     new URL("../skills", import.meta.url).pathname,
   ]);
+  assert.deepEqual(getExistingExtensionSkillPaths(import.meta.url), []);
 });

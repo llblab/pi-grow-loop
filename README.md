@@ -43,7 +43,7 @@ It provides one runtime tool:
 
 - `grow_loop` — schedules the next visible Grow Loop iteration. It takes no arguments, waits until Pi is idle and no user messages are pending, then starts the fixed 3-second operator-interrupt grace countdown.
 
-There is no slash-command control surface. Plain stop prompts such as `stop` set stopped status and let the Grow Loop skill stop semantically without resetting the monotonic loop counter. Esc/abort clears deferred scheduling or pending grace-delay timers through the active tool abort signal.
+There is no slash-command control surface. Plain stop and pause prompts such as `stop`, `stop grow loop`, `pause`, and `pause grow loop` set a latched stopped/paused status and let the Grow Loop skill stop semantically without resetting the monotonic loop counter. Ordinary operator interjection cancels pending rhythm and hides status without latching a stop. Esc/abort clears deferred scheduling or pending grace-delay timers through the active tool abort signal without becoming a durable stop latch.
 
 ## Skill Surface
 
@@ -109,7 +109,79 @@ Grow Loop should stop when:
 
 Ordinary user interjection cancels any pending loop schedule and hides loop status without entering stopped state. This makes status visibility an emergent mode indicator: if warning-colored `loop ∞N`, `loop 3.0s`, or dim `loop ∞N` is visible, Grow Loop is actively carrying the rhythm; if the operator takes the turn, the loop indicator disappears.
 
-A stop prompt clears pending timers and enters stopped loop state. Esc abort clears deferred scheduling or pending grace-delay timers and hides loop status without marking the loop stopped. Neither can recall a `deliverAs: "followUp"` message that Pi has already queued. If that queued prompt still arrives after an explicit stop, the runtime injects a no-op stop instruction and the Grow Loop skill must treat the prior stop request as authoritative: do no work and do not call `grow_loop` again.
+A stop prompt clears pending timers and enters stopped loop state. A pause prompt clears pending timers and enters paused state, which is stop-equivalent until an explicit restart phrase such as `go`, `continue`, `grow loop`, or `while true`. Esc abort clears deferred scheduling or pending grace-delay timers and hides loop status without marking the loop stopped. Neither can recall a `deliverAs: "followUp"` message that Pi has already queued. If that queued prompt still arrives after an explicit stop or pause, the runtime injects a no-op stop instruction and the Grow Loop skill must treat the prior request as authoritative: do no work and do not call `grow_loop` again.
+
+## Runtime State Machine
+
+| State | Status | Trigger | Cancellation | Latch | Can call `grow_loop`? |
+|---|---|---|---|---|---|
+| `hidden` | none | No active rhythm or status was cleared | none | no | yes, if skill says work remains |
+| `deferred` | `loop ∞N` warning | `grow_loop` called while waiting for idle/no pending messages | stop, pause, interjection, Esc/abort, shutdown, reschedule | no unless stop/pause | yes, reschedule replaces handle |
+| `countdown` | `loop 3.0s` | Pi is idle and grace delay has started | stop, pause, interjection, Esc/abort, shutdown, reschedule | no unless stop/pause | yes, reschedule replaces handle |
+| `running` | `loop ∞N` dim | Tool sent the compact loop prompt | next operator input clears status if not extension-originated | no | yes after bounded iteration evidence |
+| `interjected` | none | Ordinary operator input during deferred/countdown/running rhythm | pending rhythm is cancelled | no | yes, if explicitly resumed or skill continues safely |
+| `stopped` | `loop stopped` | `stop` / `stop grow loop` / `stop while true` | explicit restart phrase clears latch | yes | no until restart |
+| `paused` | `loop paused` | `pause` / `pause grow loop` / `pause while true` | explicit restart phrase clears latch | yes | no until restart |
+| `queued-after-stop` | `loop stopped` or `loop paused` | A follow-up prompt was already queued before stop/pause | runtime injects no-op instruction | yes | no |
+
+## Dogfooding Protocol
+
+Start only when the project has a trustworthy open-work surface such as `BACKLOG.md`, a release checklist, a failing validation, or concrete repository reality. Each iteration should complete one bounded slice: inspect the relevant truth, edit or validate proportionally, sync backlog/changelog/docs when reality changed, report evidence, then decide whether another safe useful slice remains.
+
+Operator controls are ordinary text and runtime interruption: `stop` and `pause` latch a stopped state until `go`, `continue`, `grow loop`, or `while true`; ordinary interjection cancels pending rhythm without latching; Esc/abort cancels pending runtime scheduling without becoming a durable stop unless Pi exposes such context. Release discipline is simple: unresolved work stays in `BACKLOG.md`, completed outcomes move to `CHANGELOG.md`, and durable operating rules belong in `AGENTS.md`. A terminal stop proof should state what was closed or narrowed, what evidence proves it, what remains gated or done, and the exact restart input if useful work can resume.
+
+## Operator Transcript Examples
+
+Normal continuation:
+
+```text
+User: grow loop
+Agent: closes one backlog slice, validates, reports evidence, calls grow_loop
+Runtime: loop ∞1 → loop 3.0s → while true | grow loop
+```
+
+Stop during countdown:
+
+```text
+Runtime: loop 3.0s
+User: stop grow loop
+Runtime: loop stopped; pending prompt is cancelled
+Agent: does not call grow_loop again until restart
+```
+
+Pause during countdown:
+
+```text
+Runtime: loop 3.0s
+User: pause
+Runtime: loop paused; pending prompt is cancelled
+User: continue
+Agent: may resume if a safe open slice remains
+```
+
+Ordinary interjection:
+
+```text
+Runtime: loop ∞2
+User: What changed?
+Runtime: loop status hidden; pending rhythm is cancelled without stop latch
+Agent: answers the question instead of treating it as a durable stop
+```
+
+Queued prompt after stop:
+
+```text
+Runtime: follow-up prompt was already queued
+User: stop
+Queued prompt arrives: while true | grow loop
+Agent: receives no-op stop instruction, performs no work, does not call grow_loop
+```
+
+Terminal stop proof:
+
+```text
+Agent: closed release checklist, npm run validate passed, remaining npm publish is approval-gated; restart with "grow loop" after publish credentials/approval are ready.
+```
 
 ## Compared With Goal Commands
 
@@ -144,6 +216,23 @@ The loop continues only when the agent can show evidence that another local, saf
 ## Release Stance
 
 This component is suitable for an experimental `0.1.x` release. Keep the runtime surface intentionally small: one no-argument `grow_loop` tool, bundled skills for semantics, and no slash-command, budget, cycle-count, or hidden-process control layer. The package uses a simple source-TS shape: `pi.extensions` points at `./index.ts` and `pi.skills` points at `./skills`.
+
+## Release Smoke Checklist
+
+Before publishing a release:
+
+- Run `npm run validate`.
+- Run `npm pack --dry-run` and verify the package includes:
+  - `index.ts`
+  - `skills/`
+  - `README.md`
+  - `AGENTS.md`
+  - `BACKLOG.md`
+  - `CHANGELOG.md`
+- Install from git and reload Pi with `/reload`.
+- Confirm `grow-loop` and `while-true` skills are visible from a source checkout install.
+- After publish, install from npm and reload Pi with `/reload`.
+- Confirm `grow-loop` and `while-true` skills are visible from the package install.
 
 ## Development
 

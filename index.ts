@@ -12,7 +12,8 @@ const STATUS_KEY = "pi-grow-loop";
 const DEFAULT_FOLLOW_UP_DELAY_MS = 3000;
 const DEFAULT_COUNTDOWN_TICK_MS = 100;
 
-const STOP_INPUT_RE = /^(stop)(\s+(grow\s*loop|while\s*true|loop))?[.!?\s]*$/iu;
+const STOP_INPUT_RE =
+  /^(stop|pause)(\s+(grow\s*loop|while\s*true|loop))?[.!?\s]*$/iu;
 const START_INPUT_RE =
   /^(go|continue|do it|grow\s*loop|while\s*true)(\s+(grow\s*loop|while\s*true|loop))?[.!?\s]*$/iu;
 
@@ -104,15 +105,15 @@ function scheduleIteration(
   options: Required<GrowLoopOptions>,
   cleanup?: () => void,
 ): PendingIteration {
-  let timeout: Timer | undefined;
   let countdownStartedAt: number | undefined;
   statusDeferred(ctx, iteration);
-  const interval = setInterval(() => {
+  const pending = { cleanup } as PendingIteration;
+  pending.interval = setInterval(() => {
     if (!countdownStartedAt) {
       if (!ctx.isIdle() || ctx.hasPendingMessages()) return;
       countdownStartedAt = Date.now();
       statusCountdown(ctx, options.followUpDelayMs / 1000);
-      timeout = setTimeout(() => {
+      pending.timeout = setTimeout(() => {
         clearPending();
         if (ctx.hasPendingMessages()) {
           statusText(ctx, "loop paused");
@@ -125,15 +126,15 @@ function scheduleIteration(
         markStarted();
         sendIteration(pi, ctx, iteration);
       }, options.followUpDelayMs) as Timer;
-      timeout.unref?.();
+      pending.timeout.unref?.();
       return;
     }
     const elapsed = Date.now() - countdownStartedAt;
     const remainingMs = Math.max(options.followUpDelayMs - elapsed, 0);
     if (remainingMs > 0) statusCountdown(ctx, remainingMs / 1000);
   }, options.countdownTickMs) as Timer;
-  interval.unref?.();
-  return { timeout, interval, cleanup };
+  pending.interval.unref?.();
+  return pending;
 }
 
 export default function growLoopExtension(
@@ -161,10 +162,13 @@ export default function growLoopExtension(
     clearPending();
     ctx.ui.setStatus(STATUS_KEY, undefined);
   };
-  const stopLoopStatus = (ctx: ExtensionContext) => {
+  const stopLoopStatus = (ctx: ExtensionContext, text: string) => {
     clearPending();
     stopRequested = true;
-    statusText(ctx, "loop stopped");
+    statusText(
+      ctx,
+      /^pause/i.test(text.trim()) ? "loop paused" : "loop stopped",
+    );
   };
   const resumeLoopStatus = () => {
     stopRequested = false;
@@ -182,7 +186,7 @@ export default function growLoopExtension(
     lastCtx = ctx;
     if (event.source === "extension") return { action: "continue" };
     if (isStopInput(event.text)) {
-      stopLoopStatus(ctx);
+      stopLoopStatus(ctx, event.text);
       return { action: "continue" };
     }
     hideLoopStatus(ctx);

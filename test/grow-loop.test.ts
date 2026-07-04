@@ -43,7 +43,27 @@ function createHarness(options: { idle?: boolean; pending?: boolean } = {}) {
     },
   };
   growLoopExtension(pi as any, { followUpDelayMs: 10, countdownTickMs: 5 });
-  return { handlers, tool, sent, statuses, notifications, ctx, state };
+  const latestStatus = () => statuses.at(-1)?.text;
+  const executeTool = (id = "tool", signal?: AbortSignal) =>
+    tool.execute(id, {}, signal, undefined, ctx);
+  const input = (text: string, source = "interactive") =>
+    handlers.get("input")?.({ source, text }, ctx);
+  const shutdown = () => handlers.get("session_shutdown")?.();
+  const assertNoPromptSent = () => assert.equal(sent.length, 0);
+  return {
+    handlers,
+    tool,
+    sent,
+    statuses,
+    notifications,
+    ctx,
+    state,
+    latestStatus,
+    executeTool,
+    input,
+    shutdown,
+    assertNoPromptSent,
+  };
 }
 
 function wait(ms: number) {
@@ -63,6 +83,8 @@ describe("grow-loop helpers", () => {
     assert.equal(isStopInput("stop loop!"), true);
     assert.equal(isStopInput("stop grow loop"), true);
     assert.equal(isStopInput("stop while true"), true);
+    assert.equal(isStopInput("pause"), true);
+    assert.equal(isStopInput("pause grow loop"), true);
     assert.equal(isStopInput("please stop"), false);
     assert.equal(isStopInput("go"), false);
   });
@@ -78,15 +100,15 @@ describe("grow-loop helpers", () => {
 describe("grow_loop tool runtime", () => {
   it("sends the compact prompt after the grace delay", async () => {
     const harness = createHarness({ idle: true });
-    const result = await harness.tool.execute("tool", {}, undefined, undefined, harness.ctx);
+    const result = await harness.executeTool();
     assert.equal(result.details.iteration, 1);
     await wait(25);
     assert.deepEqual(harness.sent, [{ content: "while true | grow loop", options: undefined }]);
-    assert.equal(harness.statuses.at(-1)?.text, "loop ∞1");
+    assert.equal(harness.latestStatus(), "loop ∞1");
   });
   it("round-trips a delivered loop prompt through host hooks before the next schedule", async () => {
     const harness = createHarness({ idle: true });
-    const first = await harness.tool.execute("first", {}, undefined, undefined, harness.ctx);
+    const first = await harness.executeTool("first");
     assert.equal(first.details.iteration, 1);
     await wait(25);
     const delivered = harness.sent.at(-1);
@@ -95,18 +117,18 @@ describe("grow_loop tool runtime", () => {
     assert.deepEqual(inputResult, { action: "continue" });
     const beforeResult = await harness.handlers.get("before_agent_start")?.({ prompt: delivered?.content, systemPrompt: "base" }, harness.ctx);
     assert.equal(beforeResult, undefined);
-    const second = await harness.tool.execute("second", {}, undefined, undefined, harness.ctx);
+    const second = await harness.executeTool("second");
     assert.equal(second.details.iteration, 2);
     await wait(25);
     assert.equal(harness.sent.length, 2);
-    assert.equal(harness.statuses.at(-1)?.text, "loop ∞2");
+    assert.equal(harness.latestStatus(), "loop ∞2");
   });
   it("defers the grace countdown while user messages are pending", async () => {
     const harness = createHarness({ pending: true });
-    await harness.tool.execute("tool", {}, undefined, undefined, harness.ctx);
+    await harness.executeTool();
     await wait(25);
-    assert.equal(harness.sent.length, 0);
-    assert.equal(harness.statuses.at(-1)?.text, "loop ∞1");
+    harness.assertNoPromptSent();
+    assert.equal(harness.latestStatus(), "loop ∞1");
     assert.equal(harness.notifications.length, 0);
     harness.state.pending = false;
     await wait(25);
@@ -114,73 +136,134 @@ describe("grow_loop tool runtime", () => {
   });
   it("waits for the session to become idle before starting the grace countdown", async () => {
     const harness = createHarness({ idle: false });
-    await harness.tool.execute("tool", {}, undefined, undefined, harness.ctx);
+    await harness.executeTool();
     await wait(25);
-    assert.equal(harness.sent.length, 0);
-    assert.equal(harness.statuses.at(-1)?.text, "loop ∞1");
+    harness.assertNoPromptSent();
+    assert.equal(harness.latestStatus(), "loop ∞1");
     harness.state.idle = true;
     await wait(25);
     assert.deepEqual(harness.sent, [{ content: "while true | grow loop", options: undefined }]);
   });
   it("cancels the previous pending schedule while preserving monotonic numbering", async () => {
     const harness = createHarness({ idle: true });
-    await harness.tool.execute("first", {}, undefined, undefined, harness.ctx);
-    await harness.tool.execute("second", {}, undefined, undefined, harness.ctx);
+    await harness.executeTool("first");
+    await harness.executeTool("second");
     await wait(25);
     assert.equal(harness.sent.length, 1);
-    assert.equal(harness.statuses.at(-1)?.text, "loop ∞2");
+    assert.equal(harness.latestStatus(), "loop ∞2");
   });
   it("stop input clears pending work, blocks scheduling, and explicit restart re-enables it without resetting numbering", async () => {
     const harness = createHarness({ idle: true });
-    await harness.tool.execute("tool", {}, undefined, undefined, harness.ctx);
-    await harness.handlers.get("input")?.({ source: "interactive", text: "stop" }, harness.ctx);
+    await harness.executeTool();
+    await harness.input("stop");
     await wait(25);
-    assert.equal(harness.sent.length, 0);
-    assert.equal(harness.statuses.at(-1)?.text, "loop stopped");
-    const blocked = await harness.tool.execute("tool", {}, undefined, undefined, harness.ctx);
+    harness.assertNoPromptSent();
+    assert.equal(harness.latestStatus(), "loop stopped");
+    const blocked = await harness.executeTool();
     assert.equal(blocked.details.stopped, true);
-    await harness.handlers.get("input")?.({ source: "interactive", text: "grow loop" }, harness.ctx);
-    const second = await harness.tool.execute("tool", {}, undefined, undefined, harness.ctx);
+    await harness.input("grow loop");
+    const second = await harness.executeTool();
     assert.equal(second.details.iteration, 2);
   });
   it("ordinary user input hides loop status and cancels pending scheduling without stopping the loop", async () => {
     const harness = createHarness({ idle: true });
-    await harness.tool.execute("tool", {}, undefined, undefined, harness.ctx);
-    await harness.handlers.get("input")?.({ source: "interactive", text: "What changed?" }, harness.ctx);
+    await harness.executeTool();
+    await harness.input("What changed?");
     await wait(25);
-    assert.equal(harness.sent.length, 0);
-    assert.equal(harness.statuses.at(-1)?.text, undefined);
-    const next = await harness.tool.execute("tool", {}, undefined, undefined, harness.ctx);
+    harness.assertNoPromptSent();
+    assert.equal(harness.latestStatus(), undefined);
+    const next = await harness.executeTool();
     assert.equal(next.details.iteration, 2);
   });
   it("uses followUp delivery if the session becomes busy during the grace countdown", async () => {
     const harness = createHarness({ idle: true });
-    await harness.tool.execute("tool", {}, undefined, undefined, harness.ctx);
+    await harness.executeTool();
     await wait(8);
     harness.state.idle = false;
     await wait(25);
     assert.deepEqual(harness.sent, [{ content: "while true | grow loop", options: { deliverAs: "followUp" } }]);
   });
+  it("stop input cancels an already-created grace timeout", async () => {
+    const harness = createHarness({ idle: true });
+    await harness.executeTool();
+    await wait(8);
+    await harness.input("stop");
+    await wait(25);
+    harness.assertNoPromptSent();
+    assert.equal(harness.latestStatus(), "loop stopped");
+  });
+  it("pause input cancels an already-created grace timeout and latches scheduling", async () => {
+    const harness = createHarness({ idle: true });
+    await harness.executeTool();
+    await wait(8);
+    await harness.input("pause grow loop");
+    await wait(25);
+    harness.assertNoPromptSent();
+    assert.equal(harness.latestStatus(), "loop paused");
+    const blocked = await harness.executeTool();
+    assert.equal(blocked.details.stopped, true);
+  });
+  it("ordinary user input cancels an already-created grace timeout without latching stop", async () => {
+    const harness = createHarness({ idle: true });
+    await harness.executeTool();
+    await wait(8);
+    await harness.input("What changed?");
+    await wait(25);
+    harness.assertNoPromptSent();
+    assert.equal(harness.latestStatus(), undefined);
+    const next = await harness.executeTool();
+    assert.equal(next.details.iteration, 2);
+  });
+  it("repeated scheduling cancels an already-created grace timeout", async () => {
+    const harness = createHarness({ idle: true });
+    await harness.executeTool("first");
+    await wait(8);
+    await harness.executeTool("second");
+    await wait(25);
+    assert.deepEqual(harness.sent, [{ content: "while true | grow loop", options: undefined }]);
+    assert.equal(harness.latestStatus(), "loop ∞2");
+  });
+  it("abort cancels an already-created grace timeout without latching stop", async () => {
+    const harness = createHarness({ idle: true });
+    const controller = new AbortController();
+    await harness.executeTool("tool", controller.signal);
+    await wait(8);
+    controller.abort();
+    await wait(25);
+    harness.assertNoPromptSent();
+    assert.equal(harness.latestStatus(), undefined);
+    const next = await harness.executeTool();
+    assert.equal(next.details.iteration, 2);
+  });
+  it("session shutdown cancels an already-created grace timeout and clears status", async () => {
+    const harness = createHarness({ idle: true });
+    await harness.executeTool();
+    await wait(8);
+    await harness.shutdown();
+    await wait(25);
+    harness.assertNoPromptSent();
+    assert.equal(harness.latestStatus(), undefined);
+  });
   it("aborts pending grace-delay work when the tool signal is aborted", async () => {
     const harness = createHarness({ idle: true });
     const controller = new AbortController();
-    await harness.tool.execute("tool", {}, controller.signal, undefined, harness.ctx);
+    await harness.executeTool("tool", controller.signal);
     controller.abort();
     await wait(25);
-    assert.equal(harness.sent.length, 0);
-    assert.equal(harness.statuses.at(-1)?.text, undefined);
+    harness.assertNoPromptSent();
+    assert.equal(harness.latestStatus(), undefined);
   });
   it("clears pending grace-delay work and visible status on session shutdown", async () => {
     const harness = createHarness({ idle: true });
-    await harness.tool.execute("tool", {}, undefined, undefined, harness.ctx);
-    await harness.handlers.get("session_shutdown")?.();
+    await harness.executeTool();
+    await harness.shutdown();
     await wait(25);
-    assert.equal(harness.sent.length, 0);
-    assert.equal(harness.statuses.at(-1)?.text, undefined);
+    harness.assertNoPromptSent();
+    assert.equal(harness.latestStatus(), undefined);
   });
   it("injects a no-op instruction for queued loop prompts after stop", async () => {
     const harness = createHarness({ idle: true });
-    await harness.handlers.get("input")?.({ source: "interactive", text: "stop" }, harness.ctx);
+    await harness.input("stop");
     const result = await harness.handlers.get("before_agent_start")?.({ prompt: "while true | grow loop", systemPrompt: "base" }, harness.ctx);
     assert.match(result.systemPrompt, /must not perform work/);
   });

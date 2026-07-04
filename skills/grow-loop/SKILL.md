@@ -2,7 +2,7 @@
 name: grow-loop
 description: Meta-protocol for autonomous continuation from a concrete user-focus task scope. Use when the user asks to keep making progress, or when the current project context contains a relevant backlog, plan, roadmap, TODO, task list, docs, validation failure, or repository reality that defines useful open work.
 metadata:
-  version: 0.1.0
+  version: 0.2.0
 ---
 
 # Grow Loop
@@ -48,11 +48,13 @@ When multiple plans exist, prefer the one closest to the active working director
 
 If no trustworthy scope can be selected, do not start the loop. Stop with the smallest missing input needed to identify the project and open-work surface.
 
-## Explicit Stop Request
+## Continuation Break Intent
 
-If the operator says `stop`, `stop grow loop`, `stop while true`, presses Esc to interrupt, or otherwise asks to stop the loop, do not call `grow_loop` again. Treat the loop as paused until the operator explicitly asks to start or continue Grow Loop again.
+User-requested continuation stop belongs to Grow Loop, not to `while-true`. The important signal is intent: if the operator indicates that the sequential loop should be broken, paused, interrupted, or not continued, do not call `grow_loop` again. Words like `stop` or `pause` are only common examples, not the protocol boundary. Treat clear continuation-break intent as authoritative until the operator explicitly asks to start or continue Grow Loop again.
 
-A stop request is not an iteration request. If the need to stop is present in context and a queued `while true | grow loop` prompt still arrives, do not perform repository work, do not run validation just for momentum, and do not call `grow_loop` again. Answer with a short acknowledgement and, if useful, the current stop proof or what would restart the loop.
+Ordinary operator interjection is different: it cancels pending runtime rhythm and hides status, but does not itself prove a durable continuation-break intent. Esc/abort cancels the current pending runtime schedule and hides status; treat it as a continuation break only when the surrounding Pi context exposes such intent or a durable stop marker.
+
+This is distinct from `while-true`'s internal stop, where the worker loop discovers that no actionable/preparable slice remains inside the current invocation. A continuation-break request is not an iteration request and must not be delegated to `while-true`. If the need to break continuation is present in context and a queued `while true | grow loop` prompt still arrives, do not perform repository work, do not run validation just for momentum, and do not call `grow_loop` again. Answer with a short acknowledgement and, if useful, the current stop proof or what would restart the loop.
 
 ## Cannot Start Cases
 
@@ -62,9 +64,9 @@ If all remaining work is destructive, approval-gated, credential/account-gated, 
 
 ## Roles
 
-- **Grow Loop skill**: Meta decision. Should another iteration run?
-- **while-true skill**: Worker iteration. What is the next actionable slice and how is it validated?
-- **grow_loop tool**: Runtime trigger. Schedule the next visible iteration after a fixed 3-second operator-interrupt grace delay. It takes no arguments. Never call it after an explicit stop request, Esc interrupt, or contextual stop marker until the operator explicitly restarts Grow Loop.
+- **grow-loop skill**: Meta decision. Should another iteration run? Owns user-requested continuation-break intent.
+- **while-true skill**: Worker iteration. What is the next actionable slice and how is it validated? Owns only internal no-actionability stops inside its invocation.
+- **grow_loop tool**: Runtime trigger. Schedule the next visible iteration after a fixed 3-second operator-interrupt grace delay. It takes no arguments. Never call it after clear continuation-break intent or a contextual stop marker, until the operator explicitly restarts Grow Loop. Esc/abort cancels the current pending runtime schedule; do not treat it as a durable stop unless Pi context says it is one.
 
 ## Iteration Contract
 
@@ -90,7 +92,7 @@ A useful iteration must produce at least one of:
 
 Call `grow_loop` again only when all are true:
 
-- The operator has not asked to stop or pressed Esc since the last loop start.
+- The operator has not expressed continuation-break intent, and no durable stop marker is active, since the last loop start.
 - High-value actionable or gated-but-preparable work remains.
 - Continuing does not require destructive, publishing, account, credential, or external approval.
 - The previous iteration produced evidence.
@@ -109,7 +111,7 @@ Stop and do not call `grow_loop` when:
 - The checkpoint signature repeats.
 - Validation failure requires a strategy change or human decision.
 - Continuing would be unsafe, destructive, or speculative farmville.
-- The operator asks to stop or presses Esc. After this, do not call `grow_loop` until an explicit new start/continue request.
+- The operator expresses continuation-break intent, or a durable stop marker is active. After this, do not call `grow_loop` until an explicit new start/continue request.
 
 Stopping with exact evidence and unblockers is progress.
 
@@ -124,8 +126,7 @@ When stopping, answer concisely with:
 
 ## Relationship To Worker Loops
 
-Grow Loop asks: "Should another iteration run?"
-
-while-true asks: "What is the next actionable slice?"
+- `grow-loop` asks: "Should another iteration run?"
+- `while-true` asks: "What is the next actionable slice?"
 
 Keep them separate. Do not put product-growth strategy into `while-true`; do not put file-editing implementation discipline into Grow Loop.

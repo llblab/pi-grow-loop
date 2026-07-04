@@ -2,7 +2,7 @@
 name: while-true
 description: Continuous execution-loop protocol — assess reality, refine the plan, execute the next task, repeat until a real stop condition is reached.
 metadata:
-  version: 1.0.19
+  version: 0.2.0
 ---
 
 # While True
@@ -35,24 +35,13 @@ There is no separate "pre-iteration" vs "post-iteration" protocol. Between any t
 
 Activate when at least one of:
 
+- A canonical BACKLOG, PLAN, ROADMAP, TODO, task list, or release checklist exists
 - A meaningful iteration just finished and follow-up insight exists
 - No trustworthy plan exists yet and work is expected
 - The plan is materially out of sync with reality
-- A task is actionable and the user expects continued autonomous execution
+- A task is actionable from the current plan or repository reality
 
-### Session mode
-
-When the user explicitly activates `while-true` (`keep going`, `non-stop`, etc.), first locate the canonical plan file and start the highest-priority actionable open item. The mode persists across checkpoint summaries, progress updates, and clarification answers until:
-
-- The user explicitly says `stop` or `pause`, presses Esc, or a contextual stop marker says the loop was stopped
-- No actionable backlog items remain
-- Only blocked, destructive, or externally gated work remains
-
-### Do not activate when
-
-- The interaction is purely informational with no new tasks
-- The user explicitly asks to stop, presses Esc, or the current context says a stop request is active
-- Continuing would require approval for destructive or externally sensitive actions
+Do not wait for user opinion or preference once a work surface exists. Do not activate when there is no concrete work surface, or when continuing the current invocation would require approval for destructive or externally sensitive actions.
 
 ## Backlog Engine Framing
 
@@ -88,7 +77,7 @@ The single operation performed at every loop boundary.
 
 ### Step 1: Assess current reality
 
-Review only the sources needed for an accurate picture: latest user request, conversation state, canonical plan file, modified files, failing tests, validation output, logs, relevant docs/specs.
+Review only the sources needed for an accurate picture: invocation scope, canonical plan file, modified files, failing tests, validation output, logs, relevant docs/specs.
 
 Build a snapshot: what is done, in progress, broken, missing, blocked, and what obvious work should be decomposed now.
 
@@ -202,11 +191,11 @@ A slice may be **locally complete** when the relevant local rungs pass, but it i
 
 ### External gate handling
 
-When the top remaining risk is gated by credentials, hardware, remote services, operator action, or live UI behavior:
+When the top remaining risk is gated by credentials, hardware, remote services, human action, or live UI behavior:
 
 - Mark the plan item as `blocked/gated` or narrow it to the exact remaining live verification.
 - Continue only with `gated-but-preparable` work: smoke checklists, diagnostics, safe config examples, fallback handling, docs honesty, and local regressions that improve the future live run.
-- Stop when all useful preparation is complete and the next meaningful step truly requires the external gate.
+- Stop the current invocation when all useful preparation is complete and the next meaningful step truly requires the external gate.
 - Do not convert unverified assumptions into completed claims; document them as risks or live-test items.
 
 ### Actionability classification
@@ -215,35 +204,35 @@ Before choosing the next slice, classify the highest-priority open item:
 
 - `local-actionable`: can be advanced now with local reads, edits, tests, validators, or deterministic fixtures.
 - `gated-but-preparable`: the final proof is external, but local preparation can still reduce risk for the future live/manual run.
-- `operator-gated`: needs the human to click, observe, approve, provide input, or run a client-specific/manual check.
+- `human-gated`: needs a human to click, observe, approve, provide input, or run a client-specific/manual check.
 - `environment-gated`: needs hardware, OS, credentials, network, external accounts, or a runtime not available in the current environment.
 - `upstream-gated`: needs another project/API/maintainer decision before this repo can implement honestly.
 - `approval-gated`: safe technically, but destructive, irreversible, publishing, account-affecting, or otherwise requiring explicit permission.
 
-Execute `local-actionable` and useful `gated-but-preparable` work. For every other class, record the exact unblocker for that item, then re-rank the remaining backlog. Stop only when no obvious high-value `local-actionable` or useful `gated-but-preparable` work remains.
+Execute `local-actionable` and useful `gated-but-preparable` work. For every other class, record the exact unblocker for that item, then re-rank the remaining backlog. Stop the current invocation only when no obvious high-value `local-actionable` or useful `gated-but-preparable` work remains.
 
 ### Checkpoint signature and no-op detection
 
 At each checkpoint, remember the practical signature of the loop:
 
-- selected open item and actionability class;
-- files or surfaces changed since the previous checkpoint;
-- validation rung last run and result;
-- remaining blocker/unblocker;
-- whether the plan became more truthful.
+- Selected open item and actionability class;
+- Files or surfaces changed since the previous checkpoint;
+- Validation rung last run and result;
+- Remaining blocker/unblocker;
+- Whether the plan became more truthful.
 
-If the next checkpoint has the same signature and the only available actions are repeating validators, re-reading unchanged plans, or restating the same blocker, treat the loop as no-op. Stop with a concise proof-of-stop instead of creating activity noise.
+If the next checkpoint has the same signature and the only available actions are repeating validators, re-reading unchanged plans, or restating the same blocker, treat the loop as no-op. Stop with concise evidence instead of creating activity noise.
 
 ### Evidence ledger and terminal handoff
 
 Prefer compact evidence over verbose progress narration. A good checkpoint leaves a small ledger such as `typecheck ✅`, `validate ✅ 993 pass / 1 skip`, `context ✅`, or `live state: badVisibleNames=0`.
 
-When the loop stops, produce a handoff with:
+When the invocation stops, produce a handoff with:
 
-- what was closed or narrowed;
-- what validation proves it;
-- what remains gated;
-- the exact next operator/environment/upstream input that would restart useful work.
+- What was closed or narrowed;
+- What validation proves it;
+- What remains gated or non-actionable;
+- The exact human/environment/upstream input that would make useful work actionable.
 
 ## Priority Rules
 
@@ -313,7 +302,6 @@ Stop only when:
 
 - The next step is destructive or irreversible
 - The next step requires secrets, credentials, or external accounts
-- The user explicitly asks to stop, presses Esc, or the current context says a stop request is active
 - Remaining ambiguity blocks even a safe subset
 - No actionable backlog items remain
 - Only blocked, externally gated, no-op, or low-value speculative work remains

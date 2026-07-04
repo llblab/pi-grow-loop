@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.2.0: Dogfood-Ready Runtime
+
+- [Runtime] Fixed grace-countdown timeout ownership so cancellation paths clear both the countdown interval and the already-created send timeout through the same pending iteration handle.
+- [Controls] Added explicit `pause` prompt handling as a latched stop-equivalent state with `loop paused` status and restart through existing start prompts.
+- [Docs] Aligned README and project context around the runtime control model: stop/pause latch, ordinary interjection cancels rhythm only, and Esc/abort is not a durable stop latch without contextual evidence.
+- [Docs] Added README runtime state-machine, dogfooding protocol, and compact operator transcript examples so operators can infer loop states, controls, release discipline, no-op queued stops, and stop-proof shape without reading runtime code.
+- [Skills] Restored `while-true` as the fractal work loop while making the responsibility boundary explicit: it runs from an existing backlog/plan/TODO/work surface without waiting for user opinion; no-actionability stop belongs to `while-true`; cross-turn continuation and user continuation-break intent belong to `grow-loop`/runtime.
+- [Tests] Added regressions proving all mid-countdown cancellation paths clear already-created send timeouts, including stop, pause, ordinary interjection, repeated scheduling, abort, and shutdown.
+- [Tests] Added runtime harness helpers for tool execution, input injection, shutdown, latest status, and no-prompt assertions to keep cancellation coverage easier to extend.
+- [Tests] Covered source-checkout skill discovery for present and missing co-located `skills/` directories.
+- [Release] Added GitHub Actions validation on pull requests and `main` pushes using Node 22.19.0, `npm ci`, and `npm run validate`.
+- [Release] Added a README release smoke checklist covering validation, dry pack contents, git/npm install checks, `/reload`, and skill visibility in source/package modes.
+
 ## 0.1.2: Skill Discovery Hotfix
 
 - [Skills] Added runtime resource discovery for the co-located `skills/` directory and preserved `sourceSkills` metadata so source checkouts contribute the bundled `grow-loop` and `while-true` skills the same way installed packages do.
