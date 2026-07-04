@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.2: Skill Discovery Hotfix
+
+- [Skills] Added runtime resource discovery for the co-located `skills/` directory and preserved `sourceSkills` metadata so source checkouts contribute the bundled `grow-loop` and `while-true` skills the same way installed packages do.
+
 ## 0.1.1: Idle-Deferred Scheduling Hotfix
 
 - [Runtime] Changed `grow_loop` scheduling to wait until Pi is idle and no user messages are pending before starting the 3-second grace countdown or queueing the next `while true | grow loop` prompt. Impact: active agent work and operator interjections keep priority over the next loop iteration.

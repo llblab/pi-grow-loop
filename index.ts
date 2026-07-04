@@ -1,3 +1,7 @@
+import { existsSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
 import type {
   ExtensionAPI,
   ExtensionContext,
@@ -38,6 +42,15 @@ export function isStartInput(text: string): boolean {
 
 export function isGrowLoopPrompt(text: string): boolean {
   return text.trim() === buildGrowLoopPrompt();
+}
+
+export function getExtensionSkillsDir(extensionUrl: string): string {
+  return join(dirname(fileURLToPath(extensionUrl)), "skills");
+}
+
+export function getExistingExtensionSkillPaths(extensionUrl: string): string[] {
+  const skillsDir = getExtensionSkillsDir(extensionUrl);
+  return existsSync(skillsDir) ? [skillsDir] : [];
 }
 
 function statusCountdown(ctx: ExtensionContext, seconds: number) {
@@ -156,6 +169,11 @@ export default function growLoopExtension(
   const resumeLoopStatus = () => {
     stopRequested = false;
   };
+  pi.on("resources_discover", async () => {
+    const skillPaths = getExistingExtensionSkillPaths(import.meta.url);
+    if (skillPaths.length === 0) return;
+    return { skillPaths };
+  });
   pi.on("session_shutdown", async () => {
     clearPending();
     lastCtx?.ui.setStatus(STATUS_KEY, undefined);
