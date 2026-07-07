@@ -12,18 +12,10 @@ const STATUS_KEY = "pi-grow-loop";
 const DEFAULT_FOLLOW_UP_DELAY_MS = 3000;
 const DEFAULT_COUNTDOWN_TICK_MS = 100;
 
-const STOP_INPUT_RE =
-  /^(?:(?:please\s+)?(?:stop|pause)(?:\s+(?:grow\s*loop|while\s*true|loop))?(?:\s+please)?|cancel\s+(?:grow\s*loop|while\s*true|loop))[.!?\s]*$/iu;
-const PAUSE_INPUT_RE =
-  /^(?:please\s+)?pause(?:\s+(?:grow\s*loop|while\s*true|loop))?(?:\s+please)?[.!?\s]*$/iu;
-const START_INPUT_RE =
-  /^(go|continue|do it|grow\s*loop|while\s*true)(\s+(grow\s*loop|while\s*true|loop))?[.!?\s]*$/iu;
-
 type Timer = ReturnType<typeof setTimeout> & { unref?: () => void };
 type PendingIteration = {
   interval: Timer;
   timeout?: Timer;
-  cleanup?: () => void;
 };
 
 type GrowLoopOptions = {
@@ -33,22 +25,6 @@ type GrowLoopOptions = {
 
 export function buildGrowLoopPrompt(): string {
   return "while true | grow loop";
-}
-
-export function isStopInput(text: string): boolean {
-  return STOP_INPUT_RE.test(text.trim());
-}
-
-export function isPauseInput(text: string): boolean {
-  return PAUSE_INPUT_RE.test(text.trim());
-}
-
-export function isStartInput(text: string): boolean {
-  return START_INPUT_RE.test(text.trim());
-}
-
-export function isGrowLoopPrompt(text: string): boolean {
-  return text.trim() === buildGrowLoopPrompt();
 }
 
 export function getExtensionSkillsDir(extensionUrl: string): string {
@@ -84,22 +60,13 @@ function statusDeferred(ctx: ExtensionContext, iteration: number) {
   );
 }
 
-function statusText(ctx: ExtensionContext, text: string) {
-  ctx.ui.setStatus(STATUS_KEY, ctx.ui.theme.fg("dim", text));
-}
-
 function sendIteration(
   pi: ExtensionAPI,
   ctx: ExtensionContext,
   iteration: number,
 ) {
-  const prompt = buildGrowLoopPrompt();
   statusRunning(ctx, iteration);
-  if (ctx.isIdle()) {
-    pi.sendUserMessage(prompt);
-    return;
-  }
-  pi.sendUserMessage(prompt, { deliverAs: "followUp" });
+  pi.sendUserMessage(buildGrowLoopPrompt());
 }
 
 function scheduleIteration(
@@ -107,29 +74,24 @@ function scheduleIteration(
   ctx: ExtensionContext,
   iteration: number,
   clearPending: () => void,
-  markStarted: () => void,
   options: Required<GrowLoopOptions>,
-  cleanup?: () => void,
 ): PendingIteration {
   let countdownStartedAt: number | undefined;
   statusDeferred(ctx, iteration);
-  const pending = { cleanup } as PendingIteration;
+  const pending = {} as PendingIteration;
   pending.interval = setInterval(() => {
     if (!countdownStartedAt) {
       if (!ctx.isIdle() || ctx.hasPendingMessages()) return;
       countdownStartedAt = Date.now();
       statusCountdown(ctx, options.followUpDelayMs / 1000);
       pending.timeout = setTimeout(() => {
-        clearPending();
-        if (ctx.hasPendingMessages()) {
-          statusText(ctx, "loop paused");
-          ctx.ui.notify(
-            "Grow Loop paused because a user message is pending",
-            "info",
-          );
+        pending.timeout = undefined;
+        if (!ctx.isIdle() || ctx.hasPendingMessages()) {
+          countdownStartedAt = undefined;
+          statusDeferred(ctx, iteration);
           return;
         }
-        markStarted();
+        clearPending();
         sendIteration(pi, ctx, iteration);
       }, options.followUpDelayMs) as Timer;
       pending.timeout.unref?.();
@@ -154,27 +116,17 @@ export default function growLoopExtension(
       partialOptions.countdownTickMs ?? DEFAULT_COUNTDOWN_TICK_MS,
   };
   let iteration = 0;
-  let stopRequested = false;
   let lastCtx: ExtensionContext | undefined;
   let pendingIteration: PendingIteration | undefined;
   const clearPending = () => {
     if (!pendingIteration) return;
     if (pendingIteration.timeout) clearTimeout(pendingIteration.timeout);
     clearInterval(pendingIteration.interval);
-    pendingIteration.cleanup?.();
     pendingIteration = undefined;
   };
   const hideLoopStatus = (ctx: ExtensionContext) => {
     clearPending();
     ctx.ui.setStatus(STATUS_KEY, undefined);
-  };
-  const stopLoopStatus = (ctx: ExtensionContext, text: string) => {
-    clearPending();
-    stopRequested = true;
-    statusText(ctx, isPauseInput(text) ? "loop paused" : "loop stopped");
-  };
-  const resumeLoopStatus = () => {
-    stopRequested = false;
   };
   pi.on("resources_discover", async () => {
     const skillPaths = getExistingExtensionSkillPaths(import.meta.url);
@@ -188,21 +140,8 @@ export default function growLoopExtension(
   pi.on("input", async (event, ctx) => {
     lastCtx = ctx;
     if (event.source === "extension") return { action: "continue" };
-    if (isStopInput(event.text)) {
-      stopLoopStatus(ctx, event.text);
-      return { action: "continue" };
-    }
     hideLoopStatus(ctx);
-    if (isStartInput(event.text)) resumeLoopStatus();
     return { action: "continue" };
-  });
-  pi.on("before_agent_start", async (event) => {
-    if (!stopRequested || !isGrowLoopPrompt(event.prompt)) return;
-    return {
-      systemPrompt:
-        event.systemPrompt +
-        "\n\nGrow Loop stop is active. This queued grow-loop prompt must not perform work and must not call grow_loop again. Reply with a concise stop acknowledgement/proof only, until the operator explicitly restarts Grow Loop.",
-    };
   });
   pi.registerTool({
     name: "grow_loop",
@@ -214,35 +153,20 @@ export default function growLoopExtension(
     promptGuidelines: [
       "Use grow_loop with no arguments when the Grow Loop skill decides another while-true iteration should run.",
       "Do not pass arguments to grow_loop. To stop, do not call grow_loop; finish with a concise stop proof.",
-      "grow_loop waits 3 seconds before scheduling the next iteration so operator stop prompts can arrive first.",
+      "grow_loop waits 3 seconds before scheduling the next iteration so any operator prompt can interrupt the rhythm first.",
     ],
     parameters: Type.Object({}),
-    async execute(_toolCallId, _params, signal, _onUpdate, ctx) {
+    async execute(_toolCallId, _params, _signal, _onUpdate, ctx) {
       lastCtx = ctx;
-      if (stopRequested) {
-        return {
-          content: [
-            {
-              type: "text",
-              text: "Grow Loop is stopped; ask explicitly to restart before scheduling another iteration",
-            },
-          ],
-          details: { stopped: true },
-        };
-      }
       clearPending();
       iteration += 1;
       const nextIteration = iteration;
-      const abortPending = () => hideLoopStatus(ctx);
-      signal?.addEventListener("abort", abortPending, { once: true });
       pendingIteration = scheduleIteration(
         pi,
         ctx,
         nextIteration,
         clearPending,
-        () => {},
         options,
-        () => signal?.removeEventListener("abort", abortPending),
       );
       return {
         content: [
