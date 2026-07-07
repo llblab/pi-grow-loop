@@ -1,11 +1,6 @@
 import assert from "node:assert/strict";
 import { afterEach, describe, it, mock } from "node:test";
-import growLoopExtension, {
-  buildGrowLoopPrompt,
-  isPauseInput,
-  isStartInput,
-  isStopInput,
-} from "../index.ts";
+import growLoopExtension, { buildGrowLoopPrompt } from "../index.ts";
 
 function createHarness(options: { idle?: boolean; pending?: boolean } = {}) {
   const state = {
@@ -16,7 +11,6 @@ function createHarness(options: { idle?: boolean; pending?: boolean } = {}) {
   let tool: any;
   const sent: Array<{ content: string; options?: unknown }> = [];
   const statuses: Array<{ key: string; text: string | undefined }> = [];
-  const notifications: Array<{ text: string; level: string }> = [];
   const pi = {
     on(event: string, handler: Function) {
       handlers.set(event, handler);
@@ -24,7 +18,6 @@ function createHarness(options: { idle?: boolean; pending?: boolean } = {}) {
     registerTool(definition: any) {
       tool = definition;
     },
-    registerShortcut() {},
     sendUserMessage(content: string, sendOptions?: unknown) {
       sent.push({ content, options: sendOptions });
     },
@@ -39,9 +32,6 @@ function createHarness(options: { idle?: boolean; pending?: boolean } = {}) {
       setStatus(key: string, text: string | undefined) {
         statuses.push({ key, text });
       },
-      notify(text: string, level: string) {
-        notifications.push({ text, level });
-      },
     },
     isIdle() {
       return state.idle;
@@ -52,8 +42,8 @@ function createHarness(options: { idle?: boolean; pending?: boolean } = {}) {
   };
   growLoopExtension(pi as any, { followUpDelayMs: 10, countdownTickMs: 5 });
   const latestStatus = () => statuses.at(-1)?.text;
-  const executeTool = (id = "tool", signal?: AbortSignal) =>
-    tool.execute(id, {}, signal, undefined, ctx);
+  const executeTool = (id = "tool") =>
+    tool.execute(id, {}, undefined, undefined, ctx);
   const input = (text: string, source = "interactive") =>
     handlers.get("input")?.({ source, text }, ctx);
   const shutdown = () => handlers.get("session_shutdown")?.();
@@ -63,7 +53,6 @@ function createHarness(options: { idle?: boolean; pending?: boolean } = {}) {
     tool,
     sent,
     statuses,
-    notifications,
     ctx,
     state,
     latestStatus,
@@ -102,37 +91,6 @@ describe("grow-loop helpers", () => {
   it("builds the compact loop prompt", () => {
     assert.equal(buildGrowLoopPrompt(), "while true | grow loop");
   });
-  it("matches explicit stop prompts", () => {
-    assert.equal(isStopInput("stop"), true);
-    assert.equal(isStopInput("stop loop!"), true);
-    assert.equal(isStopInput("stop grow loop"), true);
-    assert.equal(isStopInput("stop while true"), true);
-    assert.equal(isStopInput("pause"), true);
-    assert.equal(isStopInput("pause grow loop"), true);
-    assert.equal(isStopInput("please stop"), true);
-    assert.equal(isStopInput("stop please"), true);
-    assert.equal(isStopInput("please pause"), true);
-    assert.equal(isStopInput("pause please"), true);
-    assert.equal(isStopInput("cancel loop"), true);
-    assert.equal(isStopInput("cancel grow loop"), true);
-    assert.equal(isStopInput("cancel"), false);
-    assert.equal(isStopInput("please keep going"), false);
-    assert.equal(isStopInput("go"), false);
-  });
-  it("detects pause prompts", () => {
-    assert.equal(isPauseInput("pause"), true);
-    assert.equal(isPauseInput("please pause"), true);
-    assert.equal(isPauseInput("pause grow loop please"), true);
-    assert.equal(isPauseInput("please stop"), false);
-    assert.equal(isPauseInput("cancel loop"), false);
-  });
-  it("matches explicit restart prompts", () => {
-    assert.equal(isStartInput("grow loop"), true);
-    assert.equal(isStartInput("while true"), true);
-    assert.equal(isStartInput("do it"), true);
-    assert.equal(isStartInput("continue"), true);
-    assert.equal(isStartInput("stop"), false);
-  });
 });
 
 describe("grow_loop tool runtime", () => {
@@ -162,11 +120,6 @@ describe("grow_loop tool runtime", () => {
       harness.ctx,
     );
     assert.deepEqual(inputResult, { action: "continue" });
-    const beforeResult = await harness.handlers.get("before_agent_start")?.(
-      { prompt: delivered?.content, systemPrompt: "base" },
-      harness.ctx,
-    );
-    assert.equal(beforeResult, undefined);
     const second = await harness.executeTool("second");
     assert.equal(second.details.iteration, 2);
     await wait(25);
@@ -179,7 +132,6 @@ describe("grow_loop tool runtime", () => {
     await wait(25);
     harness.assertNoPromptSent();
     assert.equal(harness.latestStatus(), "loop ∞1");
-    assert.equal(harness.notifications.length, 0);
     harness.state.pending = false;
     await wait(25);
     assert.deepEqual(harness.sent, [
@@ -206,69 +158,43 @@ describe("grow_loop tool runtime", () => {
     assert.equal(harness.sent.length, 1);
     assert.equal(harness.latestStatus(), "loop ∞2");
   });
-  it("stop input clears pending work, blocks scheduling, and explicit restart re-enables it without resetting numbering", async () => {
-    const harness = createHarness({ idle: true });
-    await harness.executeTool();
-    await harness.input("stop");
-    await wait(25);
-    harness.assertNoPromptSent();
-    assert.equal(harness.latestStatus(), "loop stopped");
-    const blocked = await harness.executeTool();
-    assert.equal(blocked.details.stopped, true);
-    await harness.input("grow loop");
-    const second = await harness.executeTool();
-    assert.equal(second.details.iteration, 2);
+  it("user input clears pending work and hides status without blocking the tool", async () => {
+    for (const prompt of ["stop", "What changed?", "pause please", "cancel loop"]) {
+      const harness = createHarness({ idle: true });
+      await harness.executeTool();
+      await harness.input(prompt);
+      await wait(25);
+      harness.assertNoPromptSent();
+      assert.equal(harness.latestStatus(), undefined);
+      const next = await harness.executeTool();
+      assert.equal(next.details.iteration, 2);
+    }
   });
-  it("ordinary user input hides loop status and cancels pending scheduling without stopping the loop", async () => {
-    const harness = createHarness({ idle: true });
-    await harness.executeTool();
-    await harness.input("What changed?");
-    await wait(25);
-    harness.assertNoPromptSent();
-    assert.equal(harness.latestStatus(), undefined);
-    const next = await harness.executeTool();
-    assert.equal(next.details.iteration, 2);
-  });
-  it("uses followUp delivery if the session becomes busy during the grace countdown", async () => {
+  it("returns to deferred waiting if the session becomes busy during the grace countdown", async () => {
     const harness = createHarness({ idle: true });
     await harness.executeTool();
     await wait(8);
     harness.state.idle = false;
     await wait(25);
-    assert.deepEqual(harness.sent, [
-      { content: "while true | grow loop", options: { deliverAs: "followUp" } },
-    ]);
-  });
-  it("stop input cancels an already-created grace timeout", async () => {
-    const harness = createHarness({ idle: true });
-    await harness.executeTool();
-    await wait(8);
-    await harness.input("stop");
-    await wait(25);
     harness.assertNoPromptSent();
-    assert.equal(harness.latestStatus(), "loop stopped");
+    assert.equal(harness.latestStatus(), "loop ∞1");
+    harness.state.idle = true;
+    await waitFor(() =>
+      assert.deepEqual(harness.sent, [
+        { content: "while true | grow loop", options: undefined },
+      ]),
+    );
   });
-  it("pause input cancels an already-created grace timeout and latches scheduling", async () => {
-    const harness = createHarness({ idle: true });
-    await harness.executeTool();
-    await wait(8);
-    await harness.input("pause grow loop");
-    await wait(25);
-    harness.assertNoPromptSent();
-    assert.equal(harness.latestStatus(), "loop paused");
-    const blocked = await harness.executeTool();
-    assert.equal(blocked.details.stopped, true);
-  });
-  it("ordinary user input cancels an already-created grace timeout without latching stop", async () => {
-    const harness = createHarness({ idle: true });
-    await harness.executeTool();
-    await wait(8);
-    await harness.input("What changed?");
-    await wait(25);
-    harness.assertNoPromptSent();
-    assert.equal(harness.latestStatus(), undefined);
-    const next = await harness.executeTool();
-    assert.equal(next.details.iteration, 2);
+  it("user input cancels an already-created grace timeout and hides status", async () => {
+    for (const prompt of ["stop", "pause grow loop", "What changed?"]) {
+      const harness = createHarness({ idle: true });
+      await harness.executeTool();
+      await wait(8);
+      await harness.input(prompt);
+      await wait(25);
+      harness.assertNoPromptSent();
+      assert.equal(harness.latestStatus(), undefined);
+    }
   });
   it("repeated scheduling cancels an already-created grace timeout", async () => {
     const harness = createHarness({ idle: true });
@@ -281,32 +207,11 @@ describe("grow_loop tool runtime", () => {
     ]);
     assert.equal(harness.latestStatus(), "loop ∞2");
   });
-  it("abort cancels an already-created grace timeout without latching stop", async () => {
-    const harness = createHarness({ idle: true });
-    const controller = new AbortController();
-    await harness.executeTool("tool", controller.signal);
-    await wait(8);
-    controller.abort();
-    await wait(25);
-    harness.assertNoPromptSent();
-    assert.equal(harness.latestStatus(), undefined);
-    const next = await harness.executeTool();
-    assert.equal(next.details.iteration, 2);
-  });
   it("session shutdown cancels an already-created grace timeout and clears status", async () => {
     const harness = createHarness({ idle: true });
     await harness.executeTool();
     await wait(8);
     await harness.shutdown();
-    await wait(25);
-    harness.assertNoPromptSent();
-    assert.equal(harness.latestStatus(), undefined);
-  });
-  it("aborts pending grace-delay work when the tool signal is aborted", async () => {
-    const harness = createHarness({ idle: true });
-    const controller = new AbortController();
-    await harness.executeTool("tool", controller.signal);
-    controller.abort();
     await wait(25);
     harness.assertNoPromptSent();
     assert.equal(harness.latestStatus(), undefined);
@@ -318,38 +223,5 @@ describe("grow_loop tool runtime", () => {
     await wait(25);
     harness.assertNoPromptSent();
     assert.equal(harness.latestStatus(), undefined);
-  });
-  it("injects a no-op instruction for queued loop prompts after stop", async () => {
-    const harness = createHarness({ idle: true });
-    await harness.input("stop");
-    const result = await harness.handlers.get("before_agent_start")?.(
-      { prompt: "while true | grow loop", systemPrompt: "base" },
-      harness.ctx,
-    );
-    assert.match(result.systemPrompt, /must not perform work/);
-  });
-  it("allowlisted polite stop forms latch queued loop prompts", async () => {
-    const harness = createHarness({ idle: true });
-    await harness.input("please stop");
-    assert.equal(harness.latestStatus(), "loop stopped");
-    const result = await harness.handlers.get("before_agent_start")?.(
-      { prompt: "while true | grow loop", systemPrompt: "base" },
-      harness.ctx,
-    );
-    assert.match(result.systemPrompt, /must not perform work/);
-  });
-  it("allowlisted polite pause forms latch paused status", async () => {
-    const harness = createHarness({ idle: true });
-    await harness.input("pause please");
-    assert.equal(harness.latestStatus(), "loop paused");
-    const blocked = await harness.executeTool();
-    assert.equal(blocked.details.stopped, true);
-  });
-  it("cancel loop latches stopped status", async () => {
-    const harness = createHarness({ idle: true });
-    await harness.input("cancel loop");
-    assert.equal(harness.latestStatus(), "loop stopped");
-    const blocked = await harness.executeTool();
-    assert.equal(blocked.details.stopped, true);
   });
 });

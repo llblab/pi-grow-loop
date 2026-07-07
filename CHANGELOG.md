@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.0: Status-Only Runtime
+
+- [Runtime] Removed hidden follow-up delivery from countdown races; if Pi becomes busy before dispatch, Grow Loop returns to deferred waiting and keeps the next prompt visible/interruption-friendly.
+- [Controls] Reduced runtime interruption semantics to status-only behavior: any user prompt clears pending loop scheduling and hides loop status, while agent/skill intent handling decides whether future turns call `grow_loop` again.
+- [Controls] Removed Grow Loop-owned Escape/abort handling from runtime tests and documentation; Escape is treated as baseline Pi behavior outside this extension's control surface.
+- [Docs] Reworked README as a product-facing guide with early `/goal` comparison, clearer use cases, `while-true` as the worker protocol, compact runtime status language, and skill-owned continuation decisions.
+- [Tests] Replaced follow-up, synthetic abort, restart-regex, no-op injection, and stop/pause allowlist expectations with deferred retry and generic user-interjection coverage.
+
 ## 0.2.1: Runtime Prompt Polish
 
 - [Controls] Added a conservative allowlist for polite continuation-break prompts: `please stop`, `stop please`, `please pause`, `pause please`, `cancel loop`, and `cancel grow loop`.
