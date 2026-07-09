@@ -137,6 +137,10 @@ export default function growLoopExtension(
     clearPending();
     lastCtx?.ui.setStatus(STATUS_KEY, undefined);
   });
+  pi.on("agent_end", async (_event, ctx) => {
+    lastCtx = ctx;
+    if (!pendingIteration) ctx.ui.setStatus(STATUS_KEY, undefined);
+  });
   pi.on("input", async (event, ctx) => {
     lastCtx = ctx;
     if (event.source === "extension") return { action: "continue" };

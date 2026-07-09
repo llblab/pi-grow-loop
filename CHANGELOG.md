@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.4.0: Bounded Worker Meta-Protocol
+
+- [Runtime] Clear active loop status when a loop-scheduled agent run ends without arming a successor, while preserving deferred status when the ending run schedules another iteration.
+- [Skills] Consolidate `while-true` into one canonical bounded-worker protocol while preserving its named Anti-Bullshit Gate, plan bootstrap and insight classification, autonomous execution boundary, progressive-hardening safeguards, unblocker-aware priority, validation discipline, convergence controls, and visible Grow Loop continuation boundary.
+- [Skills] Consolidate `grow-loop` around scope locking, intent precedence, explicit worker-handoff consumption, checkpoint-signature comparison, gated preparation, and exactly-once continuation decisions.
+- [Docs] Strengthen the README as the human protocol contract with explicit entrypoint routing, ownership boundaries, bounded-slice semantics, worker handoff, scope continuity, operator-intent precedence, exactly-once continuation, and navigable project context.
+- [Routing] Give explicit protocol names lexical precedence: standalone `while-true` remains worker-only, explicit `grow-loop` selects the meta-protocol, the combined prompt remains runtime-internal, and unnamed multi-slice outcomes may bootstrap a backlog and route automatically into Grow Loop.
+- [Positioning] Define the project concisely as semantic loop engineering: portable bounded work plus visible, interruptible scheduling, with continuation meaning owned by the agent rather than runtime machinery.
+- [Validation] Add strict TypeScript no-emit checking for extension and test sources, isolated from transitive peer-package declaration defects.
+- [Tests] Cover terminal active-status cleanup and successor-status preservation across the `agent_end` lifecycle boundary.
+- [Release] Advance package and bundled-skill metadata to 0.4.0, reflecting the new bounded worker and explicit continuation contracts alongside lifecycle and validation hardening.
+
 ## 0.3.0: Status-Only Runtime
 
 - [Runtime] Removed hidden follow-up delivery from countdown races; if Pi becomes busy before dispatch, Grow Loop returns to deferred waiting and keeps the next prompt visible/interruption-friendly.

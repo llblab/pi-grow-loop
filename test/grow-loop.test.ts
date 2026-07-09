@@ -47,6 +47,7 @@ function createHarness(options: { idle?: boolean; pending?: boolean } = {}) {
   const input = (text: string, source = "interactive") =>
     handlers.get("input")?.({ source, text }, ctx);
   const shutdown = () => handlers.get("session_shutdown")?.();
+  const agentEnd = () => handlers.get("agent_end")?.({}, ctx);
   const assertNoPromptSent = () => assert.equal(sent.length, 0);
   return {
     handlers,
@@ -59,6 +60,7 @@ function createHarness(options: { idle?: boolean; pending?: boolean } = {}) {
     executeTool,
     input,
     shutdown,
+    agentEnd,
     assertNoPromptSent,
   };
 }
@@ -159,7 +161,12 @@ describe("grow_loop tool runtime", () => {
     assert.equal(harness.latestStatus(), "loop ∞2");
   });
   it("user input clears pending work and hides status without blocking the tool", async () => {
-    for (const prompt of ["stop", "What changed?", "pause please", "cancel loop"]) {
+    for (const prompt of [
+      "stop",
+      "What changed?",
+      "pause please",
+      "cancel loop",
+    ]) {
       const harness = createHarness({ idle: true });
       await harness.executeTool();
       await harness.input(prompt);
@@ -215,6 +222,24 @@ describe("grow_loop tool runtime", () => {
     await wait(25);
     harness.assertNoPromptSent();
     assert.equal(harness.latestStatus(), undefined);
+  });
+  it("clears active status when a delivered iteration ends without another schedule", async () => {
+    const harness = createHarness({ idle: true });
+    await harness.executeTool();
+    await waitFor(() => assert.equal(harness.sent.length, 1));
+    assert.equal(harness.latestStatus(), "loop ∞1");
+    await harness.agentEnd();
+    assert.equal(harness.latestStatus(), undefined);
+  });
+  it("preserves deferred status when the ending iteration scheduled its successor", async () => {
+    const harness = createHarness({ idle: true });
+    await harness.executeTool("first");
+    await waitFor(() => assert.equal(harness.sent.length, 1));
+    harness.state.idle = false;
+    await harness.executeTool("second");
+    await harness.agentEnd();
+    assert.equal(harness.latestStatus(), "loop ∞2");
+    await harness.shutdown();
   });
   it("clears pending grace-delay work and visible status on session shutdown", async () => {
     const harness = createHarness({ idle: true });

@@ -10,16 +10,19 @@
 - `Docs Directory Purpose`: Create `docs/` only when there are multiple project documentation pages that need an index. A lone extra README under `docs/` is unnecessary; the root `README.md` is the human entrypoint.
 - `Boundary Clarity`: Keep meta-loop decision, worker iteration, and runtime trigger separate.
 - `Scope-First Activation`: Grow Loop starts from a concrete user-focus task scope, not from command phrasing alone. Prefer project-local open-work surfaces near the active working directory and ignore unrelated, temporary, generated, dependency, archived, or stale plans.
+- `Lexical Intent Precedence`: An explicitly named protocol selects its exact behavior. Standalone `while-true` runs only the portable worker; standalone `grow-loop` selects the meta-protocol; `while true | grow loop` is reserved for runtime continuation.
+- `Natural Task Routing`: When no protocol is named, a concrete multi-slice outcome may route automatically into Grow Loop. Bootstrapping a canonical backlog from an explicit requested outcome is decomposition, not speculative work invention.
 - `Stop Honesty`: Exact proof-of-stop is better than simulated autonomous momentum.
 
 ## Concept
 
-`pi-grow-loop` is an experimental Pi extension plus bundled skills for tool-driven loop engineering. The extension exposes one no-argument `grow_loop` tool. The `grow-loop` skill finds the relevant user-focus task scope and decides whether another iteration should run. The `while-true` skill performs one bounded worker iteration.
+`pi-grow-loop` is a semantic loop-engineering layer for agent-owned, visible, interruptible continuation from real project state. The runtime exposes one no-argument `grow_loop` scheduling tool; the agent retains semantic ownership of scope, evidence, priority, safety, and continuation. The `grow-loop` skill decides whether another iteration should run, and the portable `while-true` skill performs one bounded worker pass.
 
 ## Boundaries
 
 - `grow-loop` skill owns continuation semantics: continue or stop.
-- `while-true` skill owns only one portable worker pass: assess reality, reconcile the plan, execute one actionable/preparable slice when available, validate, and hand off. It must not own continuation, user-stop semantics, command phrases, runtime tools, status text, or extension-specific controls; `grow-loop` plus `grow_loop` own sequential continuation and stop semantics for this extension.
+- Routing selects the protocol before worker execution: explicit names override inference; otherwise concrete iterative tasks may select Grow Loop when multiple validated slices and visible checkpoints are useful.
+- `while-true` skill owns only one portable worker pass: assess reality, reconcile the plan, execute one actionable/preparable slice when available, validate, and hand off. A standalone invocation must not activate or call a continuation scheduler. It must not own continuation, user-stop semantics, command phrases, runtime tools, status text, or extension-specific controls; `grow-loop` plus `grow_loop` own sequential continuation only after Grow Loop was selected.
 - `grow_loop` tool only schedules the next visible iteration; it takes no arguments. Scheduling is idle-deferred: the tool first waits until Pi is idle and no user messages are pending, then starts the fixed 3-second operator-interrupt grace countdown and sends the compact trigger `while true | grow loop` only if Pi is still idle and no user messages are pending. If the runtime becomes busy during the countdown, the tool returns to deferred waiting instead of queueing a hidden follow-up. Status shows deferred scheduling as `loop ∞N` with the iteration number in warning color, countdown as `loop 3.0s`, and active iterations as `loop ∞N` with the iteration number dimmed; `N` is monotonic within the extension instance.
 - There is no slash-command control surface. Any ordinary user prompt exits the active runtime rhythm by clearing pending scheduling and hiding loop status; restart/continuation intent belongs to the agent and Grow Loop skill, not to a runtime latch or regex.
 - No start slash commands, budgets, cycle counts, hidden processes, or background agents.
@@ -43,6 +46,7 @@ CHANGELOG.md              completed delivery history
 2. Let the skills dogfood themselves on this extension.
 3. Add state only if real runs prove it is necessary.
 4. Preserve the separation: decision in skill, execution in while-true, triggering in tool.
+5. Preserve exact named entrypoints while allowing natural multi-slice tasks to bootstrap a truthful backlog and select Grow Loop automatically.
 
 ## Style
 

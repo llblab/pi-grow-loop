@@ -1,12 +1,14 @@
 {
   "name": "@llblab/pi-grow-loop",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": false,
-  "description": "Bounded product growth loop extension and skills for Pi.",
+  "description": "Semantic loop-engineering for agent-owned, visible, interruptible continuation in Pi.",
   "keywords": [
     "pi-package",
     "pi-extension",
     "grow-loop",
+    "loop-engineering",
+    "agentic",
     "automation",
     "skills"
   ],
@@ -25,9 +27,10 @@
   },
   "scripts": {
     "check": "node --experimental-strip-types -e \"await import('./index.ts'); console.log('pi-grow-loop: extension import ok')\"",
+    "typecheck": "tsc --noEmit",
     "test": "node --experimental-strip-types --test test/*.test.ts",
     "pack:dry": "npm pack --dry-run",
-    "validate": "npm run test && npm run check && npm run pack:dry"
+    "validate": "npm run test && npm run typecheck && npm run check && npm run pack:dry"
   },
   "files": [
     "index.ts",
@@ -51,5 +54,9 @@
   "peerDependencies": {
     "@earendil-works/pi-coding-agent": "*",
     "typebox": "*"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "typescript": "latest"
   }
 }
