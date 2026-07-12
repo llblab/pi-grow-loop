@@ -30,16 +30,15 @@ The agent should run one bounded `while-true` slice, report what changed or what
 
 ## When To Use It
 
-Use `pi-grow-loop` when a project already has a real work surface or the operator provides a concrete outcome that can truthfully create one:
+Use `pi-grow-loop` when the execution shape has all of these properties:
 
-- `BACKLOG.md`, `PLAN.md`, `ROADMAP.md`, or `TODO.md`.
-- A release checklist.
-- A failing validation command.
-- A known cleanup/refactor/documentation stream.
-- Repository state that clearly exposes the next safe slice.
-- A scoped multi-slice request such as creating a new project directory and building an MVP.
+- A concrete delegated scope or outcome.
+- A truthful canonical work surface that exists or can be bootstrapped from that outcome.
+- Multiple independently useful bounded slices with separate validation evidence.
+- Operator-visible continuation boundaries that provide useful opportunities to redirect or stop.
+- Safe actionable or preparable work remains after the current slice.
 
-Decomposing an explicit requested outcome into a canonical backlog is not inventing work. Harvesting unrelated improvements merely to keep the loop alive is. If neither an existing surface nor a concrete outcome exists, the correct result is a stop proof or a request for the missing scope.
+The vocabulary, apparent size, and number of internal steps do not select the protocol. Decomposing an explicit requested outcome into a canonical backlog is not inventing work. Harvesting unrelated improvements merely to keep the loop alive is. If neither an existing surface nor a concrete outcome exists, the correct result is a stop proof or a request for the missing scope.
 
 ## Compared With `/goal`
 
@@ -52,7 +51,7 @@ Decomposing an explicit requested outcome into a canonical backlog is not invent
 | Agent question | "How do we reach this outcome?" | "What is the next safe useful slice?" |
 | Runtime shape | Goal/session frame | Normal visible Pi turns |
 | Continuation | Driven by the goal session | Re-decided after each `while-true` checkpoint |
-| Work shape | Goal-organized initiative | Multi-slice MVP work, release prep, hardening, cleanup, docs, tests |
+| Work shape | Goal-organized initiative | Independently useful slices with visible validation boundaries |
 
 The distinction is session shape and source of truth: `/goal` owns a goal object; `pi-grow-loop` has no goal object and advances a canonical backlog one visible checkpoint at a time. An explicit outcome may seed that backlog, but only requested work belongs there.
 
@@ -81,12 +80,12 @@ Protocol selection happens before worker execution:
 ```text
 explicit while-true → one portable worker pass → handoff to caller
 explicit grow-loop  → Grow Loop → while-true → decide → grow_loop or stop
-natural small task  → ordinary one-shot execution
-natural MVP/task    → Grow Loop → bootstrap backlog → bounded iterations
+one coherent change → ordinary one-shot execution
+multi-slice outcome → Grow Loop → bootstrap backlog → bounded iterations
 runtime continuation prompt: while true | grow loop
 ```
 
-Explicit protocol names are lexical overrides: asking for `while-true` never silently expands into Grow Loop. Automatic routing applies only when no protocol is named, and selects Grow Loop from the shape of a concrete multi-slice task. This preserves exact entrypoints without giving up the automatic path for outcomes such as “create a directory and build an MVP.”
+Explicit protocol names are exact overrides: asking for `while-true` never silently expands into Grow Loop. When no protocol is named, automatic routing follows execution topology: one coherent change remains one-shot, while a concrete outcome with independently useful validated slices may select Grow Loop. Concrete tasks may illustrate either shape, but their verbs and categories never act as activation predicates.
 
 ### Choosing The Execution Shape
 

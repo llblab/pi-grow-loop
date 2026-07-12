@@ -11,7 +11,7 @@
 - `Boundary Clarity`: Keep meta-loop decision, worker iteration, and runtime trigger separate.
 - `Scope-First Activation`: Grow Loop starts from a concrete user-focus task scope, not from command phrasing alone. Prefer project-local open-work surfaces near the active working directory and ignore unrelated, temporary, generated, dependency, archived, or stale plans.
 - `Lexical Intent Precedence`: An explicitly named protocol selects its exact behavior. Standalone `while-true` runs only the portable worker; standalone `grow-loop` selects the meta-protocol; `while true | grow loop` is reserved for runtime continuation.
-- `Natural Task Routing`: When no protocol is named, a concrete outcome may route automatically into Grow Loop when execution benefits from multiple independently validated slices and visible continuation checkpoints. Multiple internal steps inside one coherent change remain ordinary one-shot execution. Bootstrapping a canonical backlog from an explicit requested outcome is decomposition, not speculative work invention.
+- `Structural Routing`: When no protocol is named, route by delegated execution shape and checkpoint topology, never by verbs, work categories, prompt length, apparent size, or internal step count. One coherent change with one natural validation/reporting boundary remains ordinary execution; a concrete outcome may select Grow Loop when it benefits from multiple independently useful validated slices and visible continuation checkpoints. Bootstrapping a canonical backlog from an explicit requested outcome is decomposition, not speculative work invention.
 - `Stop Honesty`: Exact proof-of-stop is better than simulated autonomous momentum.
 
 ## Concept

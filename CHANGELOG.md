@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.2: Structural Routing
+
+- [Routing] Remove verb-, work-category-, and apparent-size-based activation language from the Grow Loop retrieval surface.
+- [Skills] Define natural routing through a concrete delegated outcome, independently useful bounded slices, separate validation evidence, and operator-visible continuation checkpoints.
+- [Docs] Align public and agent-facing contracts around execution topology while keeping concrete task references illustrative rather than normative.
+- [Compatibility] Preserve automatic routing for natural multi-slice outcomes and ordinary one-shot execution for coherent changes without changing runtime behavior or continuation authority.
+- [Release] Synchronize package, lockfile, and bundled-skill metadata at `0.4.2`.
+
 ## 0.4.1: Semantic Annealing
 
 - [Runtime] Keep active loop status visible through low-level agent endings and clear it on Pi's `agent_settled` event, preventing automatic retry or compaction recovery from appearing idle; require Pi `0.80.4` or newer for this lifecycle contract.
