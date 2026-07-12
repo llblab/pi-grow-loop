@@ -6,6 +6,8 @@ The agent owns scope, evidence, priority, safety, and the decision to continue o
 
 ## Quick Start
 
+Requires Pi `0.80.4` or newer for the settled-agent lifecycle event.
+
 Install from npm:
 
 ```bash
@@ -86,6 +88,10 @@ runtime continuation prompt: while true | grow loop
 
 Explicit protocol names are lexical overrides: asking for `while-true` never silently expands into Grow Loop. Automatic routing applies only when no protocol is named, and selects Grow Loop from the shape of a concrete multi-slice task. This preserves exact entrypoints without giving up the automatic path for outcomes such as “create a directory and build an MVP.”
 
+### Choosing The Execution Shape
+
+Multiple internal steps do not by themselves require Grow Loop. Use ordinary one-shot execution when those steps form one coherent change that can be validated and reported at one natural boundary. Use Grow Loop when a concrete delegated outcome benefits from multiple independently useful slices, each with its own validation evidence and a visible opportunity for the operator to redirect or stop. This is semantic judgment, not a keyword classifier or consent ceremony.
+
 ## Protocol Contract
 
 Each visible iteration has one checkpoint boundary:
@@ -95,7 +101,7 @@ Each visible iteration has one checkpoint boundary:
 3. `grow-loop` gives latest operator intent precedence over repository availability and compares the checkpoint with the previous iteration to reject repeated no-ops.
 4. If continuation remains safe and valuable, it calls `grow_loop` exactly once and ends the turn. Otherwise it does not call the tool and returns a stop proof.
 
-Bounded does not mean one file, command, or tiny edit. It means one complete risk-reducing slice followed by validation and an operator-visible continuation boundary.
+Bounded does not mean one file, command, internal step, or tiny edit. It means one coherent risk-reducing slice followed by validation and an operator-visible continuation boundary.
 
 A standalone `while-true` invocation ends at that handoff. Only a previously selected `grow-loop` meta-protocol may consume it as a continuation checkpoint and schedule another turn.
 
@@ -119,7 +125,7 @@ The tool never blocks future calls. Whether to continue belongs to the agent and
 - `loop 3.0s` countdown — Pi is idle and the interrupt window is open.
 - `loop ∞N` dim — the compact loop prompt was sent for this iteration.
 
-`N` is monotonic within the current extension instance. Active status clears when the scheduled agent run ends without arming a successor. There is no `loop stopped` or `loop paused` status; absence of loop status means the runtime rhythm is no longer active.
+`N` is monotonic within the current extension instance. Active status clears when the scheduled agent run fully settles without arming a successor, so automatic retry or compaction recovery does not produce a false idle state. There is no `loop stopped` or `loop paused` status; absence of loop status means the runtime rhythm is no longer active.
 
 ## Interruption Model
 

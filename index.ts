@@ -137,7 +137,7 @@ export default function growLoopExtension(
     clearPending();
     lastCtx?.ui.setStatus(STATUS_KEY, undefined);
   });
-  pi.on("agent_end", async (_event, ctx) => {
+  pi.on("agent_settled", async (_event, ctx) => {
     lastCtx = ctx;
     if (!pendingIteration) ctx.ui.setStatus(STATUS_KEY, undefined);
   });

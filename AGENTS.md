@@ -11,7 +11,7 @@
 - `Boundary Clarity`: Keep meta-loop decision, worker iteration, and runtime trigger separate.
 - `Scope-First Activation`: Grow Loop starts from a concrete user-focus task scope, not from command phrasing alone. Prefer project-local open-work surfaces near the active working directory and ignore unrelated, temporary, generated, dependency, archived, or stale plans.
 - `Lexical Intent Precedence`: An explicitly named protocol selects its exact behavior. Standalone `while-true` runs only the portable worker; standalone `grow-loop` selects the meta-protocol; `while true | grow loop` is reserved for runtime continuation.
-- `Natural Task Routing`: When no protocol is named, a concrete multi-slice outcome may route automatically into Grow Loop. Bootstrapping a canonical backlog from an explicit requested outcome is decomposition, not speculative work invention.
+- `Natural Task Routing`: When no protocol is named, a concrete outcome may route automatically into Grow Loop when execution benefits from multiple independently validated slices and visible continuation checkpoints. Multiple internal steps inside one coherent change remain ordinary one-shot execution. Bootstrapping a canonical backlog from an explicit requested outcome is decomposition, not speculative work invention.
 - `Stop Honesty`: Exact proof-of-stop is better than simulated autonomous momentum.
 
 ## Concept
@@ -26,7 +26,7 @@
 - `grow_loop` tool only schedules the next visible iteration; it takes no arguments. Scheduling is idle-deferred: the tool first waits until Pi is idle and no user messages are pending, then starts the fixed 3-second operator-interrupt grace countdown and sends the compact trigger `while true | grow loop` only if Pi is still idle and no user messages are pending. If the runtime becomes busy during the countdown, the tool returns to deferred waiting instead of queueing a hidden follow-up. Status shows deferred scheduling as `loop ∞N` with the iteration number in warning color, countdown as `loop 3.0s`, and active iterations as `loop ∞N` with the iteration number dimmed; `N` is monotonic within the extension instance.
 - There is no slash-command control surface. Any ordinary user prompt exits the active runtime rhythm by clearing pending scheduling and hiding loop status; restart/continuation intent belongs to the agent and Grow Loop skill, not to a runtime latch or regex.
 - No start slash commands, budgets, cycle counts, hidden processes, or background agents.
-- Loop status is dynamic: show warning-colored `loop ∞N` only while the next iteration is deferred until idle, `loop 3.0s` only during the grace countdown, and dim `loop ∞N` only while a loop-scheduled turn is active. Any non-extension user input clears pending loop scheduling and hides loop status.
+- Loop status is dynamic: show warning-colored `loop ∞N` only while the next iteration is deferred until idle, `loop 3.0s` only during the grace countdown, and dim `loop ∞N` only while a loop-scheduled turn is active. Clear active status only after Pi fully settles without an armed successor; low-level run endings may still lead to retry or compaction recovery. Any non-extension user input clears pending loop scheduling and hides loop status.
 - Grow Loop does not own Escape/abort semantics; Escape remains baseline Pi behavior for active agent turns. The runtime does not block future `grow_loop` tool calls; the skill contract owns whether recent user context means continue, stop, restart, or change direction.
 
 ## Topology

@@ -16,11 +16,13 @@ test("package metadata exposes source TypeScript extension and bundled skills", 
   await access(packageJson.pi.extensions[0]);
 });
 
-test("package includes the bundled skill directories directly", async () => {
+test("package includes version-synchronized bundled skills", async () => {
   const skills = await readdir("skills");
   assert.deepEqual(skills.sort(), ["grow-loop", "while-true"]);
-  await access("skills/grow-loop/SKILL.md");
-  await access("skills/while-true/SKILL.md");
+  for (const skill of skills) {
+    const source = await readFile(`skills/${skill}/SKILL.md`, "utf8");
+    assert.match(source, new RegExp(`^  version: ${packageJson.version}$`, "m"));
+  }
 });
 
 test("auto-discovered source checkout contributes co-located skills", async () => {

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.1: Semantic Annealing
+
+- [Runtime] Keep active loop status visible through low-level agent endings and clear it on Pi's `agent_settled` event, preventing automatic retry or compaction recovery from appearing idle; require Pi `0.80.4` or newer for this lifecycle contract.
+- [Tests] Cover settled lifecycle cleanup, preservation of an armed successor, and package-to-skill version synchronization.
+- [Routing] Clarify that multiple internal steps may remain one-shot work; Grow Loop applies when a concrete outcome benefits from independently validated slices and visible continuation checkpoints.
+- [Skills] Align the portable worker handoff with the meta-protocol checkpoint contract and define a bounded slice as one coherent unit rather than an artificially tiny file, command, or step.
+- [Docs] Explain the project-cultivation boundary as semantic execution-shape judgment without adding keyword classification, confirmation rituals, or a narrower automatic-routing range.
+- [Release] Synchronize package, lockfile, and bundled-skill metadata at `0.4.1` while preserving the existing autonomy and operator-control envelope.
+
 ## 0.4.0: Bounded Worker Meta-Protocol
 
 - [Runtime] Clear active loop status when a loop-scheduled agent run ends without arming a successor, while preserving deferred status when the ending run schedules another iteration.

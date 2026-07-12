@@ -2,7 +2,7 @@
 name: while-true
 description: Portable bounded backlog-worker protocol for advancing one concrete, safe, high-value slice from an explicit scoped outcome, canonical BACKLOG, PLAN, ROADMAP, TODO, release checklist, failing validation, or trustworthy repository reality. Use when work needs reality assessment, plan reconciliation, implementation, validation, and an evidence-based handoff. An explicit standalone `while-true` request selects only this worker behavior; never activate or call a continuation scheduler from this skill.
 metadata:
-  version: 0.4.0
+  version: 0.4.1
 ---
 
 # While True
@@ -75,7 +75,7 @@ Choose in this order:
 4. Canonical plan order.
 5. Default priority: broken validation or dishonest docs, required implementation, missing regression coverage, active design closure, then bounded research.
 
-Prefer the smallest high-impact slice that materially reduces the highest current risk. At equal priority, prefer a quick unblocker over a larger standalone task and split oversized work around an immediately valuable slice.
+Prefer the smallest high-impact slice that materially reduces the highest current risk. A slice is one coherent checkpoint unit, not one file, command, or internal step; keep related implementation and proportional validation together. At equal priority, prefer a quick unblocker over a larger standalone task and split oversized work around an independently valuable boundary.
 
 #### Anti-Bullshit Gate
 
@@ -162,10 +162,13 @@ Stopping with exact evidence is progress.
 
 Return only what the caller needs:
 
+- Locked scope and canonical work surface.
 - What changed or was proven.
-- Validation evidence.
+- Validation evidence and highest completed rung.
 - The plan-state transition.
-- What remains and its exact unblocker.
+- Highest-value remainder and its actionability class.
+- Blocker and exact unblocker, when present.
+- Checkpoint signature: selected item, changed surfaces, validation result, blocker, and plan transition.
 - Whether another bounded invocation is warranted.
 
 ## Invariants

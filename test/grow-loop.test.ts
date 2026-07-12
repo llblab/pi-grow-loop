@@ -48,6 +48,7 @@ function createHarness(options: { idle?: boolean; pending?: boolean } = {}) {
     handlers.get("input")?.({ source, text }, ctx);
   const shutdown = () => handlers.get("session_shutdown")?.();
   const agentEnd = () => handlers.get("agent_end")?.({}, ctx);
+  const agentSettled = () => handlers.get("agent_settled")?.({}, ctx);
   const assertNoPromptSent = () => assert.equal(sent.length, 0);
   return {
     handlers,
@@ -61,6 +62,7 @@ function createHarness(options: { idle?: boolean; pending?: boolean } = {}) {
     input,
     shutdown,
     agentEnd,
+    agentSettled,
     assertNoPromptSent,
   };
 }
@@ -223,21 +225,23 @@ describe("grow_loop tool runtime", () => {
     harness.assertNoPromptSent();
     assert.equal(harness.latestStatus(), undefined);
   });
-  it("clears active status when a delivered iteration ends without another schedule", async () => {
+  it("keeps active status through a low-level agent end and clears it once settled", async () => {
     const harness = createHarness({ idle: true });
     await harness.executeTool();
     await waitFor(() => assert.equal(harness.sent.length, 1));
     assert.equal(harness.latestStatus(), "loop ∞1");
     await harness.agentEnd();
+    assert.equal(harness.latestStatus(), "loop ∞1");
+    await harness.agentSettled();
     assert.equal(harness.latestStatus(), undefined);
   });
-  it("preserves deferred status when the ending iteration scheduled its successor", async () => {
+  it("preserves deferred status when the settling iteration scheduled its successor", async () => {
     const harness = createHarness({ idle: true });
     await harness.executeTool("first");
     await waitFor(() => assert.equal(harness.sent.length, 1));
     harness.state.idle = false;
     await harness.executeTool("second");
-    await harness.agentEnd();
+    await harness.agentSettled();
     assert.equal(harness.latestStatus(), "loop ∞2");
     await harness.shutdown();
   });

@@ -2,7 +2,7 @@
 name: grow-loop
 description: Meta-protocol for autonomous, scope-locked continuation through visible bounded worker iterations. Use when the user explicitly names `grow-loop`, or when no protocol is named and a concrete request to build, grow, harden, finish, release-prepare, clean up, test, or document work naturally requires multiple validated slices. Existing plans are optional and an explicit scoped outcome may bootstrap a canonical backlog. Do not activate for an explicit standalone `while-true` request, informational answers, unrelated plans, or work with no safe actionable or preparable slice.
 metadata:
-  version: 0.4.0
+  version: 0.4.1
 ---
 
 # Grow Loop
@@ -26,9 +26,9 @@ Apply lexical intent before execution-shape inference:
 - Explicit standalone `while-true` selects only the portable worker. Do not activate Grow Loop or call `grow_loop` from its handoff unless the user later requests Grow Loop continuation.
 - Explicit `grow-loop` selects this meta-protocol.
 - The combined `while true | grow loop` prompt is reserved for internal continuation of an already selected Grow Loop sequence.
-- When no protocol is named, use ordinary one-shot execution for small tasks and Grow Loop for concrete work that benefits from multiple validated slices, plan reconciliation, and operator-visible checkpoints.
+- When no protocol is named, use ordinary one-shot execution for a coherent change even when it needs multiple internal steps. Use Grow Loop for a concrete outcome that benefits from multiple independently validated slices, plan reconciliation, and operator-visible checkpoints.
 
-Natural routing into Grow Loop requires a concrete outcome or scope, a truthful backlog that exists or can be bootstrapped, safe actionable or preparable work, and no one-shot instruction. Routing happens before invoking `while-true`; the worker never escalates itself.
+Natural routing into Grow Loop requires a concrete outcome or scope, a truthful backlog that exists or can be bootstrapped, safe actionable or preparable work, and no one-shot instruction. The distinction is the value of independent checkpoint boundaries, not task size, keyword matching, or a confirmation ritual. Routing happens before invoking `while-true`; the worker never escalates itself.
 
 ## Scope Lock
 
