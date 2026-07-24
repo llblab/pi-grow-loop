@@ -25,6 +25,13 @@ test("package includes version-synchronized bundled skills", async () => {
   }
 });
 
+test("while-true discovers declared work surfaces without naming producers", async () => {
+  const worker = await readFile("skills/while-true/SKILL.md", "utf8");
+  assert.match(worker, /Canonical open work: <path or external reference>/);
+  assert.match(worker, /Do not scan unrelated skills/);
+  assert.doesNotMatch(worker, /GCFMOS|FMOS/);
+});
+
 test("auto-discovered source checkout contributes co-located skills", async () => {
   const indexSource = await readFile("index.ts", "utf8");
   assert.match(indexSource, /resources_discover/);

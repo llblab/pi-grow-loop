@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.3: Declared Work Surfaces
+
+- [Discovery] Let relevant project-local delivery instructions declare one canonical open-work surface through the neutral `Canonical open work: <path or external reference>` contract.
+- [Worker] Give trustworthy declared surfaces precedence over filename-based plan discovery while refusing to mine procedural skill prose or unrelated skills for available work.
+- [Scope] Let Grow Loop lock a declared feature-local work surface without naming or depending on the skill or methodology that produced it.
+- [Truth] Treat portfolio pointers as indexes rather than duplicate task lists and preserve one canonical task owner per feature scope.
+- [Docs] Document independent composition between project-local delivery instructions and the portable worker protocol.
+- [Release] Synchronize package, lockfile, and bundled-skill metadata at `0.4.3`.
+
 ## 0.4.2: Structural Routing
 
 - [Routing] Remove verb-, work-category-, and apparent-size-based activation language from the Grow Loop retrieval surface.

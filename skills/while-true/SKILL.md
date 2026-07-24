@@ -2,7 +2,7 @@
 name: while-true
 description: Portable bounded backlog-worker protocol for advancing one concrete, safe, high-value slice from an explicit scoped outcome, canonical BACKLOG, PLAN, ROADMAP, TODO, release checklist, failing validation, or trustworthy repository reality. Use when work needs reality assessment, plan reconciliation, implementation, validation, and an evidence-based handoff. An explicit standalone `while-true` request selects only this worker behavior; never activate or call a continuation scheduler from this skill.
 metadata:
-  version: 0.4.2
+  version: 0.4.3
 ---
 
 # While True
@@ -19,11 +19,14 @@ Do not execute a second slice in the same invocation. The caller owns continuati
 
 Use exactly one canonical open-work surface:
 
-1. Prefer the actively maintained `BACKLOG.md`, `PLAN.md`, `ROADMAP.md`, `TODO.md`, or release checklist nearest the active scope.
-2. If none exists but an explicit scoped user outcome, failing validation, or repository reality defines concrete expected work, create one canonical plan when project conventions allow; otherwise report the gap.
-3. If multiple surfaces exist, select the one that actively governs the current scope; do not duplicate state.
-4. Trust verified reality over stale plan text and repair the plan before relying on it.
-5. If no trustworthy surface exists, stop with the smallest missing input. Do not invent work.
+1. If relevant project-local delivery instructions for the locked scope explicitly declare `Canonical open work: <path or external reference>`, resolve relative paths from the declaring instruction and use that surface when it remains trustworthy.
+2. Otherwise prefer the actively maintained `BACKLOG.md`, `PLAN.md`, `ROADMAP.md`, `TODO.md`, or release checklist nearest the active scope.
+3. If none exists but an explicit scoped user outcome, failing validation, or repository reality defines concrete expected work, create one canonical plan when project conventions allow; otherwise report the gap.
+4. If multiple surfaces exist, select the one that actively governs the current scope; do not duplicate state. A portfolio-level pointer to a feature-local surface is an index, not a second task list.
+5. Trust verified reality over stale plan text and repair the plan before relying on it.
+6. If no trustworthy surface exists, stop with the smallest missing input. Do not invent work.
+
+Consult only instructions relevant to the locked scope. Do not scan unrelated skills for available work or infer mutable task state from procedural skill prose; only an explicit canonical-open-work declaration changes discovery precedence.
 
 The plan records what remains, not delivery history. Route durable rules to project instructions, completed outcomes to the changelog, design truth to docs/specs, and enforceable behavior to tests or guards.
 

@@ -69,6 +69,16 @@ lock the user-focus scope
 
 The selected scope stays stable across iterations unless the operator redirects it or verified reality proves that a different surface governs the same work. The runtime does not decide what matters; the skills do.
 
+### Declared Work Surfaces
+
+Relevant project-local delivery instructions may explicitly declare a feature's source of open work:
+
+```markdown
+Canonical open work: ./BACKLOG.md
+```
+
+Relative paths resolve from the declaring instruction. `while-true` gives a trustworthy declaration precedence over filename-based discovery without knowing which skill or methodology produced it. It does not mine procedural skill prose for tasks or scan unrelated skills merely to find available work. Existing root plans may index a feature-local surface, but actionable tasks must remain in only one canonical owner.
+
 ## The Three Pieces
 
 - `while-true` skill — the portable worker protocol. It assesses reality, reconciles backlog/plan state, executes at most one bounded actionable or preparable slice, validates it, and hands off evidence. It knows nothing about Grow Loop or its runtime.
@@ -185,7 +195,7 @@ The package uses Pi's source-extension shape: package metadata points directly a
 Repository files:
 
 - [`index.ts`](index.ts) — no-argument `grow_loop` tool and status scheduler.
-- [`skills/while-true/SKILL.md`](skills/while-true/SKILL.md) — bounded worker-loop protocol.
+- [`skills/while-true/SKILL.md`](skills/while-true/SKILL.md) — bounded worker-loop protocol with neutral project-local work-surface discovery.
 - [`skills/grow-loop/SKILL.md`](skills/grow-loop/SKILL.md) — continuation meta-protocol.
 - [`AGENTS.md`](AGENTS.md) — durable project protocol and routing invariants.
 - [`BACKLOG.md`](BACKLOG.md) — canonical open work and next growth slices.

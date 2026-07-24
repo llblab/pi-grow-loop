@@ -2,7 +2,7 @@
 name: grow-loop
 description: Meta-protocol for autonomous, scope-locked continuation through visible bounded worker iterations. Use when the user explicitly names `grow-loop`, or when no protocol is named and a concrete scoped outcome benefits from multiple independently useful, validated slices with operator-visible continuation checkpoints. Existing plans are optional, and an explicit scoped outcome may bootstrap a canonical backlog. Do not activate for an explicit standalone `while-true` request, ordinary one-shot work with one natural validation boundary, informational answers, unrelated plans, or work with no safe actionable or preparable slice.
 metadata:
-  version: 0.4.2
+  version: 0.4.3
 ---
 
 # Grow Loop
@@ -36,9 +36,10 @@ Select the user-focus scope in this order:
 
 1. Explicit project, directory, file, issue, or task selected by the user.
 2. An explicit scoped outcome that can be decomposed into a truthful canonical backlog.
-3. The actively maintained open-work surface nearest that scope: `BACKLOG.md`, `PLAN.md`, `ROADMAP.md`, `TODO.md`, task list, or release checklist.
-4. Active docs, validation failure, or repository reality that defines concrete remaining work.
-5. Conversation context only when it identifies a safe next slice precisely.
+3. A canonical open-work surface explicitly declared by relevant project-local delivery instructions for that scope.
+4. The actively maintained open-work surface nearest that scope: `BACKLOG.md`, `PLAN.md`, `ROADMAP.md`, `TODO.md`, task list, or release checklist.
+5. Active docs, validation failure, or repository reality that defines concrete remaining work.
+6. Conversation context only when it identifies a safe next slice precisely.
 
 Ignore unrelated repositories, temporary or generated directories, dependencies, caches, archives, and stale plans.
 
