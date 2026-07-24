@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.5.0: Scope-Locked Work Surfaces
+
+- [Discovery] Resolve relative, external, portfolio-linked, stale, missing, scope-mismatched, and competing canonical-open-work declarations without knowing which project-local method produced them.
+- [Safety] Stop on unresolved declaration ownership and refuse to harvest unrelated available work when a declared surface moves or disappears.
+- [Continuity] Preserve declared work-surface ownership across bounded iterations until user intent or verified repository reality changes it.
+- [Boundaries] Keep mature knowledge, support guidance, historical delivery text, examples, insights, and procedural prose outside task discovery unless they explicitly declare trustworthy current canonical open work; allow the same skill to declare work again when feature pressure returns.
+- [Docs] Align operator and agent contracts around deterministic feature-local work resolution and one canonical task owner.
+- [Evidence] Keep the plain-text declaration after independent composition runs showed that scope and ownership validation resolve current friction without a producer registry, lifecycle marker, or structured metadata layer.
+
 ## 0.4.3: Declared Work Surfaces
 
 - [Discovery] Let relevant project-local delivery instructions declare one canonical open-work surface through the neutral `Canonical open work: <path or external reference>` contract.

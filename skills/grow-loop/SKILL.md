@@ -2,7 +2,7 @@
 name: grow-loop
 description: Meta-protocol for autonomous, scope-locked continuation through visible bounded worker iterations. Use when the user explicitly names `grow-loop`, or when no protocol is named and a concrete scoped outcome benefits from multiple independently useful, validated slices with operator-visible continuation checkpoints. Existing plans are optional, and an explicit scoped outcome may bootstrap a canonical backlog. Do not activate for an explicit standalone `while-true` request, ordinary one-shot work with one natural validation boundary, informational answers, unrelated plans, or work with no safe actionable or preparable slice.
 metadata:
-  version: 0.4.3
+  version: 0.5.0
 ---
 
 # Grow Loop
@@ -43,7 +43,7 @@ Select the user-focus scope in this order:
 
 Ignore unrelated repositories, temporary or generated directories, dependencies, caches, archives, and stale plans.
 
-Keep the selected scope stable across iterations. Re-select it only when the user redirects the work, the surface becomes untrustworthy, or verified reality proves another surface governs the same scope. Never harvest available work merely to preserve momentum.
+Keep the selected scope and declared work-surface ownership stable across iterations. Re-select only when the user redirects the work or verified reality proves another surface governs the same scope. A stale or moved declaration requires repair or an explicit ambiguity stop, not harvesting other available work to preserve momentum.
 
 If no trustworthy scope exists, do not invoke the worker or call `grow_loop`; request the smallest missing input.
 

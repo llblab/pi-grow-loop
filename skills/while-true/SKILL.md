@@ -2,7 +2,7 @@
 name: while-true
 description: Portable bounded backlog-worker protocol for advancing one concrete, safe, high-value slice from an explicit scoped outcome, canonical BACKLOG, PLAN, ROADMAP, TODO, release checklist, failing validation, or trustworthy repository reality. Use when work needs reality assessment, plan reconciliation, implementation, validation, and an evidence-based handoff. An explicit standalone `while-true` request selects only this worker behavior; never activate or call a continuation scheduler from this skill.
 metadata:
-  version: 0.4.3
+  version: 0.5.0
 ---
 
 # While True
@@ -27,6 +27,30 @@ Use exactly one canonical open-work surface:
 6. If no trustworthy surface exists, stop with the smallest missing input. Do not invent work.
 
 Consult only instructions relevant to the locked scope. Do not scan unrelated skills for available work or infer mutable task state from procedural skill prose; only an explicit canonical-open-work declaration changes discovery precedence.
+
+### Declared Surface Resolution
+
+Resolve declarations without knowing which project-local method produced them:
+
+- **Relative path:** Resolve from the declaring instruction's directory, not the current working directory.
+- **External reference:** Require a stable issue, epic, query, or reference precise enough to recover current open work; never mirror it into a speculative local plan.
+- **Scope mismatch:** Ignore a declaration that does not govern the locked feature scope, even when its work remains locally actionable.
+- **Portfolio pointer:** Treat a parent item that links to a feature-local surface as an index; keep actionable tasks in the declared child owner.
+- **Stale or missing surface:** Repair or replace the declaration only from verified scope evidence. Do not fall through to unrelated available work because the declared owner moved or disappeared.
+- **Competing declarations:** Select one only when project ownership or verified reality establishes precedence. Otherwise stop with the conflicting declarations and the smallest input needed to choose.
+
+Once selected, preserve the same declared surface across bounded invocations until user intent or verified repository reality changes its ownership. A moved path with unchanged ownership is a repair, not permission to reselect unrelated scope.
+
+### Knowledge And Delivery Boundary
+
+A relevant project-local skill may provide feature knowledge, constraints, or support without owning current tasks. Relevance alone never makes it an open-work surface.
+
+- Without an explicit trustworthy `Canonical open work:` declaration, treat skill content only as guidance for work selected elsewhere.
+- Never infer tasks from procedural prose, examples, insights, historical delivery sections, maturity language, or archived organs.
+- If a declaration remains but verified reality shows no actionable work, treat it as stale and reconcile its owner rather than using empty or historical content as momentum.
+- When the same knowledge skill later declares a new truthful surface for renewed feature work, consume that declaration normally; no lifecycle marker or producer identity is needed.
+
+The worker alone interprets and validates work-surface declarations. Its handoff reports the selected canonical surface and evidence; callers may lock or continue that scope but must not reinterpret project-local skill prose independently.
 
 The plan records what remains, not delivery history. Route durable rules to project instructions, completed outcomes to the changelog, design truth to docs/specs, and enforceable behavior to tests or guards.
 

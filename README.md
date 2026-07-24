@@ -77,7 +77,13 @@ Relevant project-local delivery instructions may explicitly declare a feature's 
 Canonical open work: ./BACKLOG.md
 ```
 
-Relative paths resolve from the declaring instruction. `while-true` gives a trustworthy declaration precedence over filename-based discovery without knowing which skill or methodology produced it. It does not mine procedural skill prose for tasks or scan unrelated skills merely to find available work. Existing root plans may index a feature-local surface, but actionable tasks must remain in only one canonical owner.
+Relative paths resolve from the declaring instruction. `while-true` gives a trustworthy declaration precedence over filename-based discovery without knowing which skill or methodology produced it. It does not mine procedural skill prose for tasks or scan unrelated skills merely to find available work.
+
+Resolution remains scope-locked: external references must recover precise current work, scope-mismatched declarations are ignored, root plans may index a feature-local surface without duplicating tasks, and stale or missing owners must be repaired from evidence rather than replaced with unrelated work. Competing relevant declarations stop for the smallest ownership decision when project evidence cannot select one.
+
+A project-local knowledge or support skill without a trustworthy declaration remains context, never a task source. `while-true` does not infer work from prose, examples, insights, historical delivery sections, or lifecycle language. The same skill may later declare new canonical open work when its feature evolves; discovery follows current evidence rather than producer identity.
+
+The plain-text declaration remains intentionally sufficient: real composition runs require scope and ownership validation, not a producer registry, lifecycle marker, or structured metadata layer. Additional syntax should appear only after reproducible ambiguity proves this contract insufficient.
 
 ## The Three Pieces
 

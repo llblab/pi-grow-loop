@@ -30,6 +30,28 @@ test("while-true discovers declared work surfaces without naming producers", asy
   assert.match(worker, /Canonical open work: <path or external reference>/);
   assert.match(worker, /Do not scan unrelated skills/);
   assert.doesNotMatch(worker, /GCFMOS|FMOS/);
+  for (const resolutionCase of [
+    "Relative path",
+    "External reference",
+    "Scope mismatch",
+    "Portfolio pointer",
+    "Stale or missing surface",
+    "Competing declarations",
+  ]) {
+    assert.match(worker, new RegExp(`\\*\\*${resolutionCase}:\\*\\*`));
+  }
+  assert.match(worker, /preserve the same declared surface across bounded invocations/);
+  assert.match(worker, /Relevance alone never makes it an open-work surface/);
+  assert.match(worker, /Never infer tasks from procedural prose, examples, insights, historical delivery sections/);
+  assert.match(worker, /same knowledge skill later declares a new truthful surface/);
+  assert.match(worker, /worker alone interprets and validates work-surface declarations/);
+});
+
+test("grow-loop consumes the worker handoff without producer-specific interpretation", async () => {
+  const meta = await readFile("skills/grow-loop/SKILL.md", "utf8");
+  assert.match(meta, /consume its handoff without redoing worker implementation analysis/);
+  assert.doesNotMatch(meta, /GCFMOS|FMOS/);
+  assert.doesNotMatch(meta, /Relative path:|External reference:|Portfolio pointer:/);
 });
 
 test("auto-discovered source checkout contributes co-located skills", async () => {
