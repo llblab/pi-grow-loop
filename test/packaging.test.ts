@@ -25,6 +25,12 @@ test("package includes version-synchronized bundled skills", async () => {
   }
 });
 
+test("CI validates the declared minimum and latest Node.js versions", async () => {
+  const workflow = await readFile(".github/workflows/validate.yml", "utf8");
+  assert.match(workflow, /node-version:\s*\n\s*- "22\.19\.0"\s*\n\s*- latest/);
+  assert.match(workflow, /node-version: \$\{\{ matrix\.node-version \}\}/);
+});
+
 test("while-true discovers declared work surfaces without naming producers", async () => {
   const worker = await readFile("skills/while-true/SKILL.md", "utf8");
   assert.match(worker, /Canonical open work: <path or external reference>/);
@@ -47,9 +53,22 @@ test("while-true discovers declared work surfaces without naming producers", asy
   assert.match(worker, /worker alone interprets and validates work-surface declarations/);
 });
 
-test("grow-loop consumes the worker handoff without producer-specific interpretation", async () => {
+test("while-true batches independent tasks into one attributable validation cohort", async () => {
+  const worker = await readFile("skills/while-true/SKILL.md", "utf8");
+  assert.match(worker, /batch them into the same validation cohort/);
+  assert.match(worker, /cheap focused check that can falsify its own change/);
+  assert.match(worker, /Prefer batching as the default/);
+  assert.match(worker, /Use a single-task cohort when the task is large/);
+  assert.match(worker, /Per-task falsification/);
+  assert.match(worker, /Shared cohort validation/);
+  assert.match(worker, /Do not batch unrelated scope merely to amortize validation/);
+});
+
+test("grow-loop consumes the worker cohort handoff without reinterpreting batching", async () => {
   const meta = await readFile("skills/grow-loop/SKILL.md", "utf8");
   assert.match(meta, /consume its handoff without redoing worker implementation analysis/);
+  assert.match(meta, /evaluates the cohort handoff as one checkpoint/);
+  assert.match(meta, /does not reinterpret its batching/);
   assert.doesNotMatch(meta, /GCFMOS|FMOS/);
   assert.doesNotMatch(meta, /Relative path:|External reference:|Portfolio pointer:/);
 });

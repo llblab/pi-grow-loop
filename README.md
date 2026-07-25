@@ -61,8 +61,9 @@ The distinction is session shape and source of truth: `/goal` owns a goal object
 lock the user-focus scope
   → checkpoint current reality
   → reconcile the open-work surface
-  → select one actionable or preparable slice
-  → execute and validate proportionally
+  → assemble one bounded validation cohort
+  → execute tasks with focused checks
+  → validate the cohort proportionally
   → hand off evidence and remaining state
   → decide once: stop, or schedule one next visible turn
 ```
@@ -87,7 +88,7 @@ The plain-text declaration remains intentionally sufficient: real composition ru
 
 ## The Three Pieces
 
-- `while-true` skill — the portable worker protocol. It assesses reality, reconciles backlog/plan state, executes at most one bounded actionable or preparable slice, validates it, and hands off evidence. It knows nothing about Grow Loop or its runtime.
+- `while-true` skill — the portable worker protocol. It assesses reality, reconciles backlog/plan state, and executes one bounded validation cohort. By default it batches several independent low-coupling tasks, falsifies each task cheaply, runs expensive shared validation once, and hands off evidence. Coupled, ordered, large, high-risk, or diagnostically ambiguous work runs as a single-task cohort. It knows nothing about Grow Loop or its runtime.
 - `grow-loop` skill — the continuation meta-protocol. It locks the relevant scope, interprets recent user intent, consumes the worker handoff, and decides exactly once whether another iteration should run.
 - `grow_loop` tool — the scheduler. It waits briefly, shows status, and sends the next visible Pi prompt. It takes no arguments.
 
@@ -111,12 +112,13 @@ Multiple internal steps do not by themselves require Grow Loop. Use ordinary one
 
 Each visible iteration has one checkpoint boundary:
 
-1. `while-true` executes at most one coherent useful slice, which may include multiple related edits and validation commands.
-2. The worker hands off the locked scope, plan transition, evidence, validation result, highest-value remaining item, actionability, blocker, and exact unblocker.
-3. `grow-loop` gives latest operator intent precedence over repository availability and compares the checkpoint with the previous iteration to reject repeated no-ops.
-4. If continuation remains safe and valuable, it calls `grow_loop` exactly once and ends the turn. Otherwise it does not call the tool and returns a stop proof.
+1. `while-true` executes at most one bounded validation cohort. The cohort batches independent low-coupling tasks by default and falls back to one task when ordering, overlap, size, risk, or diagnosis requires it.
+2. Each cohort task gets a cheap focused falsifier before the next task; expensive type, build, integration, context, or live validation runs once after the retained cohort.
+3. The worker hands off the locked scope, cohort membership, plan transitions, per-task evidence, shared validation result, highest-value remaining item, actionability, blocker, and exact unblocker.
+4. `grow-loop` gives latest operator intent precedence over repository availability and compares the checkpoint with the previous iteration to reject repeated no-ops.
+5. If continuation remains safe and valuable, it calls `grow_loop` exactly once and ends the turn. Otherwise it does not call the tool and returns a stop proof.
 
-Bounded does not mean one file, command, internal step, or tiny edit. It means one coherent risk-reducing slice followed by validation and an operator-visible continuation boundary.
+Bounded does not mean one file, command, internal step, backlog item, or tiny edit. It means one validation cohort whose task-level failures remain attributable, followed by shared validation and an operator-visible continuation boundary.
 
 A standalone `while-true` invocation ends at that handoff. Only a previously selected `grow-loop` meta-protocol may consume it as a continuation checkpoint and schedule another turn.
 
@@ -129,7 +131,7 @@ A standalone `while-true` invocation ends at that handoff. Only a previously sel
 - Sends the compact prompt `while true | grow loop` only if Pi is still idle.
 - If Pi becomes busy during the countdown, returns to deferred waiting instead of queueing a hidden follow-up.
 - Shows loop status only while it is actively carrying the rhythm.
-- Clears pending scheduling and hides loop status when any non-extension user prompt arrives.
+- Clears pending scheduling and hides loop status when any user prompt arrives, including prompts injected by another extension; only the scheduler's exact expected continuation prompt preserves the rhythm.
 
 The tool never blocks future calls. Whether to continue belongs to the agent and skills, not to a runtime latch, regex, slash command, or hidden state machine.
 
@@ -144,7 +146,7 @@ The tool never blocks future calls. Whether to continue belongs to the agent and
 
 ## Interruption Model
 
-Any non-extension user prompt exits the active runtime rhythm:
+Any user prompt except the scheduler's exact expected continuation prompt exits the active runtime rhythm. This includes operator input delivered through Telegram, RPC bridges, or other extensions:
 
 ```text
 Runtime: loop 3.0s or loop ∞2

@@ -2,7 +2,7 @@
 name: grow-loop
 description: Meta-protocol for autonomous, scope-locked continuation through visible bounded worker iterations. Use when the user explicitly names `grow-loop`, or when no protocol is named and a concrete scoped outcome benefits from multiple independently useful, validated slices with operator-visible continuation checkpoints. Existing plans are optional, and an explicit scoped outcome may bootstrap a canonical backlog. Do not activate for an explicit standalone `while-true` request, ordinary one-shot work with one natural validation boundary, informational answers, unrelated plans, or work with no safe actionable or preparable slice.
 metadata:
-  version: 0.5.0
+  version: 0.6.0
 ---
 
 # Grow Loop
@@ -56,7 +56,7 @@ Interpret the latest context in this order:
 3. Worker evidence, safety gates, and blockers.
 4. Remaining backlog availability.
 
-Any ordinary non-extension user prompt exits the runtime rhythm and is authoritative context. Decide whether it means answer, stop, restart, continue, or change direction; do not infer continuation from backlog availability alone.
+Any user prompt except the runtime's exact expected continuation prompt exits the runtime rhythm and is authoritative context, including operator input injected through another extension. Decide whether it means answer, stop, restart, continue, or change direction; do not infer continuation from backlog availability alone.
 
 Escape remains baseline Pi behavior, not a Grow Loop control. Treat it as a continuation break only when session context exposes that intent or a durable stop marker.
 
@@ -72,10 +72,10 @@ After one `while-true` invocation, consume its handoff without redoing worker im
 - Plan-state transition.
 - Highest-value remaining item and actionability class.
 - Gate, blocker, and exact unblocker.
-- Checkpoint signature: selected item, changed surfaces, validation result, blocker, and plan transition.
+- Checkpoint signature: selected cohort items, changed surfaces, per-task and shared validation results, blocker, and plan transitions.
 - Latest user intent.
 
-A useful invocation must change an artifact, increase validation confidence, narrow a blocker, improve plan truth, or remove a risky assumption. Otherwise treat it as a possible no-op.
+A useful invocation must change an artifact, increase validation confidence, narrow a blocker, improve plan truth, or remove a risky assumption. The worker may batch independent low-coupling tasks into one validation cohort; Grow Loop evaluates the cohort handoff as one checkpoint and does not reinterpret its batching. Otherwise treat the invocation as a possible no-op.
 
 Compare the checkpoint signature with the previous invocation. A repeated signature with only unchanged reads, checks, or blocker restatement is terminal no-op evidence.
 

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.6.0: Batched Validation Cohorts
+
+- [Worker] Make one bounded validation cohort the default `while-true` execution unit, batching independent low-coupling backlog tasks while retaining single-task execution for coupled, ordered, large, high-risk, or diagnostically ambiguous work.
+- [Efficiency] Give every cohort task a cheap focused falsifier, then share expensive type, build, integration, context, or live validation across the completed cohort without sacrificing failure attribution.
+- [Boundaries] Keep cohort assembly inside the portable worker while Grow Loop consumes the resulting handoff as one checkpoint and retains sole ownership of continuation.
+- [Interop] Preserve the runtime rhythm only for its exact expected continuation prompt; operator messages delivered through Telegram, RPC bridges, or other extensions now cancel pending scheduling and hide loop status like direct input.
+- [Compatibility] Validate the package on both the declared minimum Node.js `22.19.0` runtime and the latest Node.js release in CI.
+- [Evidence] Cover cohort contracts, bridge-injected interruption, exact own-prompt exemption, synchronized package metadata, strict type checking, extension import, and packed source shape.
+
 ## 0.5.0: Scope-Locked Work Surfaces
 
 - [Discovery] Resolve relative, external, portfolio-linked, stale, missing, scope-mismatched, and competing canonical-open-work declarations without knowing which project-local method produced them.

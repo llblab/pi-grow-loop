@@ -179,6 +179,23 @@ describe("grow_loop tool runtime", () => {
       assert.equal(next.details.iteration, 2);
     }
   });
+  it("extension-injected operator input cancels pending scheduling", async () => {
+    const harness = createHarness({ idle: true });
+    await harness.executeTool();
+    await harness.input("stop from bridge", "extension");
+    await wait(25);
+    harness.assertNoPromptSent();
+    assert.equal(harness.latestStatus(), undefined);
+  });
+  it("exempts only the expected own prompt from extension-input cancellation", async () => {
+    const harness = createHarness({ idle: true });
+    await harness.executeTool();
+    await waitFor(() => assert.equal(harness.sent.length, 1));
+    await harness.input(buildGrowLoopPrompt(), "extension");
+    assert.equal(harness.latestStatus(), "loop ∞1");
+    await harness.input("What changed through the bridge?", "extension");
+    assert.equal(harness.latestStatus(), undefined);
+  });
   it("returns to deferred waiting if the session becomes busy during the grace countdown", async () => {
     const harness = createHarness({ idle: true });
     await harness.executeTool();

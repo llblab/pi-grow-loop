@@ -64,8 +64,10 @@ function sendIteration(
   pi: ExtensionAPI,
   ctx: ExtensionContext,
   iteration: number,
+  expectOwnPrompt: () => void,
 ) {
   statusRunning(ctx, iteration);
+  expectOwnPrompt();
   pi.sendUserMessage(buildGrowLoopPrompt());
 }
 
@@ -74,6 +76,7 @@ function scheduleIteration(
   ctx: ExtensionContext,
   iteration: number,
   clearPending: () => void,
+  expectOwnPrompt: () => void,
   options: Required<GrowLoopOptions>,
 ): PendingIteration {
   let countdownStartedAt: number | undefined;
@@ -92,7 +95,7 @@ function scheduleIteration(
           return;
         }
         clearPending();
-        sendIteration(pi, ctx, iteration);
+        sendIteration(pi, ctx, iteration, expectOwnPrompt);
       }, options.followUpDelayMs) as Timer;
       pending.timeout.unref?.();
       return;
@@ -118,6 +121,7 @@ export default function growLoopExtension(
   let iteration = 0;
   let lastCtx: ExtensionContext | undefined;
   let pendingIteration: PendingIteration | undefined;
+  let ownPromptPending = false;
   const clearPending = () => {
     if (!pendingIteration) return;
     if (pendingIteration.timeout) clearTimeout(pendingIteration.timeout);
@@ -125,6 +129,7 @@ export default function growLoopExtension(
     pendingIteration = undefined;
   };
   const hideLoopStatus = (ctx: ExtensionContext) => {
+    ownPromptPending = false;
     clearPending();
     ctx.ui.setStatus(STATUS_KEY, undefined);
   };
@@ -134,6 +139,7 @@ export default function growLoopExtension(
     return { skillPaths };
   });
   pi.on("session_shutdown", async () => {
+    ownPromptPending = false;
     clearPending();
     lastCtx?.ui.setStatus(STATUS_KEY, undefined);
   });
@@ -143,7 +149,14 @@ export default function growLoopExtension(
   });
   pi.on("input", async (event, ctx) => {
     lastCtx = ctx;
-    if (event.source === "extension") return { action: "continue" };
+    const isOwnPrompt =
+      event.source === "extension" &&
+      ownPromptPending &&
+      event.text === buildGrowLoopPrompt();
+    if (isOwnPrompt) {
+      ownPromptPending = false;
+      return { action: "continue" };
+    }
     hideLoopStatus(ctx);
     return { action: "continue" };
   });
@@ -162,6 +175,7 @@ export default function growLoopExtension(
     parameters: Type.Object({}),
     async execute(_toolCallId, _params, _signal, _onUpdate, ctx) {
       lastCtx = ctx;
+      ownPromptPending = false;
       clearPending();
       iteration += 1;
       const nextIteration = iteration;
@@ -170,6 +184,9 @@ export default function growLoopExtension(
         ctx,
         nextIteration,
         clearPending,
+        () => {
+          ownPromptPending = true;
+        },
         options,
       );
       return {
