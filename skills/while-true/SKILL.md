@@ -2,7 +2,7 @@
 name: while-true
 description: Portable bounded backlog-worker protocol for advancing one safe, high-value validation cohort from an explicit scoped outcome, canonical BACKLOG, PLAN, ROADMAP, TODO, release checklist, failing validation, or trustworthy repository reality. Batches independent low-coupling tasks by default and uses one task when ordering, risk, size, or diagnosis requires it. Use when work needs reality assessment, plan reconciliation, implementation, validation, and an evidence-based handoff. An explicit standalone `while-true` request selects only this worker behavior; never activate or call a continuation scheduler from this skill.
 metadata:
-  version: 0.6.0
+  version: 0.6.1
 ---
 
 # While True
