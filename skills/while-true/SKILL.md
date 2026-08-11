@@ -1,8 +1,6 @@
 ---
 name: while-true
 description: Portable bounded backlog-worker protocol for advancing one safe, high-value validation cohort from an explicit scoped outcome, canonical BACKLOG, PLAN, ROADMAP, TODO, release checklist, failing validation, or trustworthy repository reality. Batches independent low-coupling tasks by default and uses one task when ordering, risk, size, or diagnosis requires it. Use when work needs reality assessment, plan reconciliation, implementation, validation, and an evidence-based handoff. An explicit standalone `while-true` request selects only this worker behavior; never activate or call a continuation scheduler from this skill.
-metadata:
-  version: 0.6.1
 ---
 
 # While True
@@ -33,12 +31,12 @@ Consult only instructions relevant to the locked scope. Do not scan unrelated sk
 
 Resolve declarations without knowing which project-local method produced them:
 
-- **Relative path:** Resolve from the declaring instruction's directory, not the current working directory.
-- **External reference:** Require a stable issue, epic, query, or reference precise enough to recover current open work; never mirror it into a speculative local plan.
-- **Scope mismatch:** Ignore a declaration that does not govern the locked feature scope, even when its work remains locally actionable.
-- **Portfolio pointer:** Treat a parent item that links to a feature-local surface as an index; keep actionable tasks in the declared child owner.
-- **Stale or missing surface:** Repair or replace the declaration only from verified scope evidence. Do not fall through to unrelated available work because the declared owner moved or disappeared.
-- **Competing declarations:** Select one only when project ownership or verified reality establishes precedence. Otherwise stop with the conflicting declarations and the smallest input needed to choose.
+- **Relative path**: Resolve from the declaring instruction's directory, not the current working directory.
+- **External reference**: Require a stable issue, epic, query, or reference precise enough to recover current open work; never mirror it into a speculative local plan.
+- **Scope mismatch**: Ignore a declaration that does not govern the locked feature scope, even when its work remains locally actionable.
+- **Portfolio pointer**: Treat a parent item that links to a feature-local surface as an index; keep actionable tasks in the declared child owner.
+- **Stale or missing surface**: Repair or replace the declaration only from verified scope evidence. Do not fall through to unrelated available work because the declared owner moved or disappeared.
+- **Competing declarations**: Select one only when project ownership or verified reality establishes precedence. Otherwise stop with the conflicting declarations and the smallest input needed to choose.
 
 Once selected, preserve the same declared surface across bounded invocations until user intent or verified repository reality changes its ownership. A moved path with unchanged ownership is a repair, not permission to reselect unrelated scope.
 
@@ -155,8 +153,8 @@ When new evidence changes a task, update the canonical plan immediately. Decompo
 
 Validation has two levels:
 
-1. **Per-task falsification:** After each cohort task, run the cheapest focused test, check, inspection, or type boundary that can identify failure in that task's surface.
-2. **Shared cohort validation:** After all retained tasks pass focused falsification, run the cheapest broader check that can falsify their combined integration, then climb only as required.
+1. **Per-task falsification**: After each cohort task, run the cheapest focused test, check, inspection, or type boundary that can identify failure in that task's surface.
+2. **Shared cohort validation**: After all retained tasks pass focused falsification, run the cheapest broader check that can falsify their combined integration, then climb only as required.
 
 Shared validation may include:
 

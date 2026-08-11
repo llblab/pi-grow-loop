@@ -16,12 +16,13 @@ test("package metadata exposes source TypeScript extension and bundled skills", 
   await access(packageJson.pi.extensions[0]);
 });
 
-test("package includes version-synchronized bundled skills", async () => {
+test("package includes package-version-independent bundled skills", async () => {
   const skills = await readdir("skills");
   assert.deepEqual(skills.sort(), ["grow-loop", "while-true"]);
   for (const skill of skills) {
     const source = await readFile(`skills/${skill}/SKILL.md`, "utf8");
-    assert.match(source, new RegExp(`^  version: ${packageJson.version}$`, "m"));
+    assert.match(source, new RegExp(`^name: ${skill}$`, "m"));
+    assert.doesNotMatch(source, /^metadata:\s*\n\s+version:/m);
   }
 });
 
@@ -44,7 +45,7 @@ test("while-true discovers declared work surfaces without naming producers", asy
     "Stale or missing surface",
     "Competing declarations",
   ]) {
-    assert.match(worker, new RegExp(`\\*\\*${resolutionCase}:\\*\\*`));
+    assert.match(worker, new RegExp(`\\*\\*${resolutionCase}\\*\\*:`));
   }
   assert.match(worker, /preserve the same declared surface across bounded invocations/);
   assert.match(worker, /Relevance alone never makes it an open-work surface/);

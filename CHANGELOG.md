@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.2: Version-Independent Skills
+
+- [Skills] Decouple bundled `grow-loop` and `while-true` frontmatter from npm package versions so reusable protocol identity no longer duplicates release state.
+- [Docs] Normalize emphasized resolution and validation labels so punctuation remains outside bold text without changing protocol behavior.
+- [Evidence] Align packaging assertions with version-independent skill metadata and normalized Markdown while retaining discovery, routing, and cohort contract coverage.
+
 ## 0.6.0: Batched Validation Cohorts
 
 - [Worker] Make one bounded validation cohort the default `while-true` execution unit, batching independent low-coupling backlog tasks while retaining single-task execution for coupled, ordered, large, high-risk, or diagnostically ambiguous work.
