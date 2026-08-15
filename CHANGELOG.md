@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.1: Banner Presentation Hotfix
+
+- [Docs] Display the packaged project banner at the top of the README through its stable repository URL so GitHub and npm readers see the release identity immediately.
+
 ## 0.7.0: Configurable Continuation Delay
 
 - [Runtime] Add optional `after_seconds` scheduling from 3 through 3600 seconds, preserving the minimum operator-interrupt window while letting agents defer the next visible iteration until asynchronous work is worth checking.

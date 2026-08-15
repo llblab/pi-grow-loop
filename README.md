@@ -1,5 +1,7 @@
 # pi-grow-loop
 
+![pi-grow-loop banner](https://raw.githubusercontent.com/llblab/pi-grow-loop/main/banner.jpg)
+
 `pi-grow-loop` is a semantic loop-engineering layer for Pi. It pairs the portable `while-true` worker protocol with a visible, interruptible scheduler to advance concrete work from project state or an explicit scoped outcome.
 
 The agent owns scope, evidence, priority, safety, and the decision to continue or stop; the runtime only schedules the next turn, while the operator retains normal conversational control. There is no hidden queue, fixed workflow, regex latch, or runtime state machine replacing agent judgment.
