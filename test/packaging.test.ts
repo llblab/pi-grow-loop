@@ -13,7 +13,10 @@ test("package metadata exposes source TypeScript extension and bundled skills", 
   assert.deepEqual(packageJson.pi.skills, ["./skills"]);
   assert.equal("sourceExtensions" in packageJson.pi, false);
   assert.deepEqual(packageJson.pi.sourceSkills, ["./skills"]);
+  assert.equal(packageJson.pi.image.endsWith("/banner.jpg"), true);
+  assert.equal(packageJson.files.includes("banner.jpg"), true);
   await access(packageJson.pi.extensions[0]);
+  await access("banner.jpg");
 });
 
 test("package includes package-version-independent bundled skills", async () => {

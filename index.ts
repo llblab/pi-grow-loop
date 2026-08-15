@@ -11,6 +11,8 @@ import { Type } from "typebox";
 const STATUS_KEY = "pi-grow-loop";
 const DEFAULT_FOLLOW_UP_DELAY_MS = 3000;
 const DEFAULT_COUNTDOWN_TICK_MS = 100;
+const MIN_AFTER_SECONDS = 3;
+const MAX_AFTER_SECONDS = 3600;
 
 type Timer = ReturnType<typeof setTimeout> & { unref?: () => void };
 type PendingIteration = {
@@ -164,21 +166,35 @@ export default function growLoopExtension(
     name: "grow_loop",
     label: "Grow Loop",
     description:
-      "Schedule the next visible Grow Loop iteration after a fixed 3-second operator-interrupt grace countdown. Takes no arguments.",
+      "Schedule the next visible Grow Loop iteration after an optional delay in seconds (default: 3).",
     promptSnippet:
-      "Schedule the next Grow Loop iteration after a fixed interrupt grace countdown.",
+      "Schedule the next Grow Loop iteration after an optional delay.",
     promptGuidelines: [
-      "Use grow_loop with no arguments when the Grow Loop skill decides another while-true iteration should run.",
-      "Do not pass arguments to grow_loop. To stop, do not call grow_loop; finish with a concise stop proof.",
-      "grow_loop waits 3 seconds before scheduling the next iteration so any operator prompt can interrupt the rhythm first.",
+      "Use grow_loop when the Grow Loop skill decides another while-true iteration should run; omit after_seconds for the default 3-second delay.",
+      "Increase grow_loop after_seconds from 3 up to 3600 when continuation should wait for asynchronous work; never shorten the 3-second operator-interrupt window.",
+      "Choose grow_loop after_seconds from evidence about the expected remaining wait, then reassess after each wake instead of repeating the previous delay mechanically.",
+      "To stop, do not call grow_loop; finish with a concise stop proof.",
     ],
-    parameters: Type.Object({}),
-    async execute(_toolCallId, _params, _signal, _onUpdate, ctx) {
+    parameters: Type.Object({
+      after_seconds: Type.Optional(
+        Type.Number({
+          minimum: MIN_AFTER_SECONDS,
+          maximum: MAX_AFTER_SECONDS,
+          default: 3,
+          description: "Seconds to wait after Pi becomes idle before starting the next iteration (maximum: 3600)",
+        }),
+      ),
+    }),
+    async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
       lastCtx = ctx;
       ownPromptPending = false;
       clearPending();
       iteration += 1;
       const nextIteration = iteration;
+      const delayMs =
+        params.after_seconds === undefined
+          ? options.followUpDelayMs
+          : params.after_seconds * 1000;
       pendingIteration = scheduleIteration(
         pi,
         ctx,
@@ -187,16 +203,16 @@ export default function growLoopExtension(
         () => {
           ownPromptPending = true;
         },
-        options,
+        { ...options, followUpDelayMs: delayMs },
       );
       return {
         content: [
           {
             type: "text",
-            text: `\nGrow Loop iteration #${nextIteration} deferred until idle, then scheduled after ${options.followUpDelayMs / 1000}s grace delay`,
+            text: `\nGrow Loop iteration #${nextIteration} deferred until idle, then scheduled after ${delayMs / 1000}s delay`,
           },
         ],
-        details: { iteration: nextIteration, delayMs: options.followUpDelayMs },
+        details: { iteration: nextIteration, delayMs },
       };
     },
   });

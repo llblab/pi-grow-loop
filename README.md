@@ -90,7 +90,7 @@ The plain-text declaration remains intentionally sufficient: real composition ru
 
 - `while-true` skill — the portable worker protocol. It assesses reality, reconciles backlog/plan state, and executes one bounded validation cohort. By default it batches several independent low-coupling tasks, falsifies each task cheaply, runs expensive shared validation once, and hands off evidence. Coupled, ordered, large, high-risk, or diagnostically ambiguous work runs as a single-task cohort. It knows nothing about Grow Loop or its runtime.
 - `grow-loop` skill — the continuation meta-protocol. It locks the relevant scope, interprets recent user intent, consumes the worker handoff, and decides exactly once whether another iteration should run.
-- `grow_loop` tool — the scheduler. It waits briefly, shows status, and sends the next visible Pi prompt. It takes no arguments.
+- `grow_loop` tool — the scheduler. It waits for an optional `after_seconds` delay (default `3`), shows status, and sends the next visible Pi prompt.
 
 Protocol selection happens before worker execution:
 
@@ -127,11 +127,14 @@ A standalone `while-true` invocation ends at that handoff. Only a previously sel
 `grow_loop` is intentionally narrow:
 
 - Waits until Pi is idle and no user messages are pending.
-- Shows a fixed 3-second interrupt countdown.
+- Shows an interrupt countdown configured by the optional `after_seconds` argument from 3 through 3600, defaulting to 3 seconds. The minimum preserves a window for the operator to redirect the agent before continuation.
+- Can act as a continuation timer when the agent must wait for asynchronous work before checking again.
 - Sends the compact prompt `while true | grow loop` only if Pi is still idle.
 - If Pi becomes busy during the countdown, returns to deferred waiting instead of queueing a hidden follow-up.
 - Shows loop status only while it is actively carrying the rhythm.
 - Clears pending scheduling and hides loop status when any user prompt arrives, including prompts injected by another extension; only the scheduler's exact expected continuation prompt preserves the rhythm.
+
+For the normal interrupt window, call `grow_loop` without arguments. To check asynchronous work again after one minute, call it with `{ "after_seconds": 60 }`. The one-hour maximum keeps the tool focused on bounded asynchronous checks rather than long-term scheduling. Agents should estimate the next useful check from the expected remaining duration, reassess after every wake, and shorten later waits as completion approaches instead of repeating one interval mechanically.
 
 The tool never blocks future calls. Whether to continue belongs to the agent and skills, not to a runtime latch, regex, slash command, or hidden state machine.
 
@@ -139,7 +142,7 @@ The tool never blocks future calls. Whether to continue belongs to the agent and
 
 - No status — no active loop rhythm, or the operator took the turn.
 - `loop ∞N` warning — the next loop prompt is armed and waiting for idle/no pending messages.
-- `loop 3.0s` countdown — Pi is idle and the interrupt window is open.
+- `loop Ns` countdown — Pi is idle and the configured delay is running.
 - `loop ∞N` dim — the compact loop prompt was sent for this iteration.
 
 `N` is monotonic within the current extension instance. Active status clears when the scheduled agent run fully settles without arming a successor, so automatic retry or compaction recovery does not produce a false idle state. There is no `loop stopped` or `loop paused` status; absence of loop status means the runtime rhythm is no longer active.
@@ -202,7 +205,7 @@ The package uses Pi's source-extension shape: package metadata points directly a
 
 Repository files:
 
-- [`index.ts`](index.ts) — no-argument `grow_loop` tool and status scheduler.
+- [`index.ts`](index.ts) — optionally delayed `grow_loop` tool and status scheduler.
 - [`skills/while-true/SKILL.md`](skills/while-true/SKILL.md) — bounded worker-loop protocol with neutral project-local work-surface discovery.
 - [`skills/grow-loop/SKILL.md`](skills/grow-loop/SKILL.md) — continuation meta-protocol.
 - [`AGENTS.md`](AGENTS.md) — durable project protocol and routing invariants.

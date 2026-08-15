@@ -1,6 +1,6 @@
 {
   "name": "@llblab/pi-grow-loop",
-  "version": "0.6.2",
+  "version": "0.7.0",
   "private": false,
   "description": "Semantic loop-engineering for agent-owned, visible, interruptible continuation in Pi",
   "keywords": [
@@ -33,6 +33,7 @@
     "validate": "npm run test && npm run typecheck && npm run check && npm run pack:dry"
   },
   "files": [
+    "banner.jpg",
     "index.ts",
     "skills",
     "README.md",
@@ -49,7 +50,8 @@
     ],
     "sourceSkills": [
       "./skills"
-    ]
+    ],
+    "image": "https://raw.githubusercontent.com/llblab/pi-grow-loop/main/banner.jpg"
   },
   "peerDependencies": {
     "@earendil-works/pi-coding-agent": ">=0.80.4",

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.7.0: Configurable Continuation Delay
+
+- [Runtime] Add optional `after_seconds` scheduling from 3 through 3600 seconds, preserving the minimum operator-interrupt window while letting agents defer the next visible iteration until asynchronous work is worth checking.
+- [Agent Contract] Guide agents to choose evidence-based waits, reserve the one-hour maximum for genuinely long work, and reassess the delay after every wake instead of polling mechanically.
+- [Package] Ship the package banner and expose it through Pi package metadata alongside synchronized runtime, skill, operator-guide, and validation contracts.
+
 ## 0.6.2: Version-Independent Skills
 
 - [Skills] Decouple bundled `grow-loop` and `while-true` frontmatter from npm package versions so reusable protocol identity no longer duplicates release state.

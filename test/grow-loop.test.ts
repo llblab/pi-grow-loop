@@ -42,8 +42,8 @@ function createHarness(options: { idle?: boolean; pending?: boolean } = {}) {
   };
   growLoopExtension(pi as any, { followUpDelayMs: 10, countdownTickMs: 5 });
   const latestStatus = () => statuses.at(-1)?.text;
-  const executeTool = (id = "tool") =>
-    tool.execute(id, {}, undefined, undefined, ctx);
+  const executeTool = (id = "tool", params: { after_seconds?: number } = {}) =>
+    tool.execute(id, params, undefined, undefined, ctx);
   const input = (text: string, source = "interactive") =>
     handlers.get("input")?.({ source, text }, ctx);
   const shutdown = () => handlers.get("session_shutdown")?.();
@@ -98,16 +98,38 @@ describe("grow-loop helpers", () => {
 });
 
 describe("grow_loop tool runtime", () => {
-  it("sends the compact prompt after the grace delay", async () => {
+  it("constrains after_seconds from the interrupt minimum through one hour", () => {
+    const harness = createHarness();
+    const schema = harness.tool.parameters.properties.after_seconds;
+    assert.equal(schema.minimum, 3);
+    assert.equal(schema.maximum, 3600);
+    assert.equal(schema.default, 3);
+    assert.equal(
+      harness.tool.promptGuidelines.some((guideline: string) =>
+        guideline.includes("reassess after each wake"),
+      ),
+      true,
+    );
+  });
+  it("uses the default grace delay when after_seconds is omitted", async () => {
     const harness = createHarness({ idle: true });
     const result = await harness.executeTool();
     assert.equal(result.details.iteration, 1);
+    assert.equal(result.details.delayMs, 10);
     await waitFor(() =>
       assert.deepEqual(harness.sent, [
         { content: "while true | grow loop", options: undefined },
       ]),
     );
     assert.equal(harness.latestStatus(), "loop ∞1");
+  });
+  it("delays continuation by the requested after_seconds", async () => {
+    const harness = createHarness({ idle: true });
+    const result = await harness.executeTool("tool", { after_seconds: 3 });
+    assert.equal(result.details.delayMs, 3000);
+    await wait(25);
+    harness.assertNoPromptSent();
+    await harness.shutdown();
   });
   it("round-trips a delivered loop prompt through host hooks before the next schedule", async () => {
     const harness = createHarness({ idle: true });

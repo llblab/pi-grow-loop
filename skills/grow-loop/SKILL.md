@@ -93,7 +93,7 @@ Continue only when every condition holds:
 
 Approval- or externally gated scopes may continue only through safe preparation that materially reduces future risk. Stop when preparation is exhausted; never cross the gate.
 
-When all conditions hold, call `grow_loop` exactly once with no arguments, then end the turn. The tool waits until Pi is idle with no pending messages, shows the fixed 3-second operator-interrupt countdown, and sends the next visible `while true | grow loop` prompt only if the session remains idle.
+When all conditions hold, call `grow_loop` exactly once, then end the turn. Omit `after_seconds` for the default 3-second operator-interrupt delay, or increase it from 3 up to 3600 when continuation should wait for known asynchronous work. Never shorten the 3-second minimum because it preserves the operator's chance to redirect the next iteration. Choose a longer delay from concrete evidence about expected remaining duration, use the one-hour limit only for genuinely long-running work, and reassess after every wake so the next delay tracks the latest state rather than mechanically repeating the previous value. The tool waits until Pi is idle with no pending messages, shows the configured countdown, and sends the next visible `while true | grow loop` prompt only if the session remains idle.
 
 ### Stop
 
