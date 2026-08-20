@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.2: Trusted Release Automation
+
+- [Release] Add tag-gated package validation, npm Trusted Publisher provenance, immutable package/tag identity checks, public registry verification, and workflow-owned GitHub Release creation through `.github/workflows/release.yml`.
+
 ## 0.7.1: Banner Presentation Hotfix
 
 - [Docs] Display the packaged project banner at the top of the README through its stable repository URL so GitHub and npm readers see the release identity immediately.

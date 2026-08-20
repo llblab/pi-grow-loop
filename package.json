@@ -1,6 +1,6 @@
 {
   "name": "@llblab/pi-grow-loop",
-  "version": "0.7.1",
+  "version": "0.7.2",
   "private": false,
   "description": "Semantic loop-engineering for agent-owned, visible, interruptible continuation in Pi",
   "keywords": [
@@ -29,8 +29,9 @@
     "check": "node --experimental-strip-types -e \"await import('./index.ts'); console.log('pi-grow-loop: extension import ok')\"",
     "typecheck": "tsc --noEmit",
     "test": "node --experimental-strip-types --test test/*.test.ts",
+    "audit": "npm audit --omit=peer",
     "pack:dry": "npm pack --dry-run",
-    "validate": "npm run test && npm run typecheck && npm run check && npm run pack:dry"
+    "validate": "npm run test && npm run typecheck && npm run check && npm run audit && npm run pack:dry"
   },
   "files": [
     "banner.jpg",
