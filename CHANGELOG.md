@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.7.3: Turn-Scoped Iteration Hotfix
+
+- [Runtime] Keep repeated `grow_loop` calls within one agent turn bound to the same next iteration, replacing only the deferred delay instead of incrementing the visible loop number.
+- [Feedback] Report repeated same-turn scheduling with concise tool-specific copy that preserves the existing iteration identity and confirms the updated delay.
+- [Evidence] Cover same-turn rescheduling before and during the countdown while preserving normal iteration advancement across visible turns.
+
 ## 0.7.2: Trusted Release Automation
 
 - [Release] Add tag-gated package validation, npm Trusted Publisher provenance, immutable package/tag identity checks, public registry verification, and workflow-owned GitHub Release creation through `.github/workflows/release.yml`.

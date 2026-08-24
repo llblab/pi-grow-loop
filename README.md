@@ -131,6 +131,7 @@ A standalone `while-true` invocation ends at that handoff. Only a previously sel
 - Waits until Pi is idle and no user messages are pending.
 - Shows an interrupt countdown configured by the optional `after_seconds` argument from 3 through 3600, defaulting to 3 seconds. The minimum preserves a window for the operator to redirect the agent before continuation.
 - Can act as a continuation timer when the agent must wait for asynchronous work before checking again.
+- Treats repeated calls in one agent turn as delay updates for the same next iteration, so one deferred prompt corresponds to one iteration-number increment.
 - Sends the compact prompt `while true | grow loop` only if Pi is still idle.
 - If Pi becomes busy during the countdown, returns to deferred waiting instead of queueing a hidden follow-up.
 - Shows loop status only while it is actively carrying the rhythm.
@@ -147,7 +148,7 @@ The tool never blocks future calls. Whether to continue belongs to the agent and
 - `loop Ns` countdown — Pi is idle and the configured delay is running.
 - `loop ∞N` dim — the compact loop prompt was sent for this iteration.
 
-`N` is monotonic within the current extension instance. Active status clears when the scheduled agent run fully settles without arming a successor, so automatic retry or compaction recovery does not produce a false idle state. There is no `loop stopped` or `loop paused` status; absence of loop status means the runtime rhythm is no longer active.
+`N` is monotonic within the current extension instance and advances only once when a turn arms its deferred successor. Repeated `grow_loop` calls before that turn ends retain `N`, replace the pending delay, and report that the iteration was already scheduled. Active status clears when the scheduled agent run fully settles without arming a successor, so automatic retry or compaction recovery does not produce a false idle state. There is no `loop stopped` or `loop paused` status; absence of loop status means the runtime rhythm is no longer active.
 
 ## Interruption Model
 

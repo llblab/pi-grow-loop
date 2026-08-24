@@ -124,6 +124,7 @@ export default function growLoopExtension(
   let lastCtx: ExtensionContext | undefined;
   let pendingIteration: PendingIteration | undefined;
   let ownPromptPending = false;
+  let scheduledThisTurn = false;
   const clearPending = () => {
     if (!pendingIteration) return;
     if (pendingIteration.timeout) clearTimeout(pendingIteration.timeout);
@@ -142,6 +143,7 @@ export default function growLoopExtension(
   });
   pi.on("session_shutdown", async () => {
     ownPromptPending = false;
+    scheduledThisTurn = false;
     clearPending();
     lastCtx?.ui.setStatus(STATUS_KEY, undefined);
   });
@@ -151,6 +153,7 @@ export default function growLoopExtension(
   });
   pi.on("input", async (event, ctx) => {
     lastCtx = ctx;
+    scheduledThisTurn = false;
     const isOwnPrompt =
       event.source === "extension" &&
       ownPromptPending &&
@@ -189,7 +192,11 @@ export default function growLoopExtension(
       lastCtx = ctx;
       ownPromptPending = false;
       clearPending();
-      iteration += 1;
+      const isReschedule = scheduledThisTurn;
+      if (!isReschedule) {
+        iteration += 1;
+        scheduledThisTurn = true;
+      }
       const nextIteration = iteration;
       const delayMs =
         params.after_seconds === undefined
@@ -209,7 +216,9 @@ export default function growLoopExtension(
         content: [
           {
             type: "text",
-            text: `\nGrow Loop iteration #${nextIteration} deferred until idle, then scheduled after ${delayMs / 1000}s delay`,
+            text: isReschedule
+              ? `\nTool grow_loop was already called this turn. Iteration #${nextIteration} remains scheduled; delay updated to ${delayMs / 1000}s`
+              : `\nGrow Loop iteration #${nextIteration} deferred until idle, then scheduled after ${delayMs / 1000}s delay`,
           },
         ],
         details: { iteration: nextIteration, delayMs },

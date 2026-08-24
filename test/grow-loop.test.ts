@@ -176,13 +176,18 @@ describe("grow_loop tool runtime", () => {
       { content: "while true | grow loop", options: undefined },
     ]);
   });
-  it("cancels the previous pending schedule while preserving monotonic numbering", async () => {
+  it("reschedules within one turn without incrementing the iteration", async () => {
     const harness = createHarness({ idle: true });
     await harness.executeTool("first");
-    await harness.executeTool("second");
+    const second = await harness.executeTool("second");
+    assert.equal(second.details.iteration, 1);
+    assert.equal(
+      second.content[0].text,
+      "\nTool grow_loop was already called this turn. Iteration #1 remains scheduled; delay updated to 0.01s",
+    );
     await wait(25);
     assert.equal(harness.sent.length, 1);
-    assert.equal(harness.latestStatus(), "loop ∞2");
+    assert.equal(harness.latestStatus(), "loop ∞1");
   });
   it("user input clears pending work and hides status without blocking the tool", async () => {
     for (const prompt of [
@@ -244,16 +249,17 @@ describe("grow_loop tool runtime", () => {
       assert.equal(harness.latestStatus(), undefined);
     }
   });
-  it("repeated scheduling cancels an already-created grace timeout", async () => {
+  it("repeated scheduling cancels an already-created grace timeout without incrementing", async () => {
     const harness = createHarness({ idle: true });
     await harness.executeTool("first");
     await wait(8);
-    await harness.executeTool("second");
+    const second = await harness.executeTool("second");
+    assert.equal(second.details.iteration, 1);
     await wait(25);
     assert.deepEqual(harness.sent, [
       { content: "while true | grow loop", options: undefined },
     ]);
-    assert.equal(harness.latestStatus(), "loop ∞2");
+    assert.equal(harness.latestStatus(), "loop ∞1");
   });
   it("session shutdown cancels an already-created grace timeout and clears status", async () => {
     const harness = createHarness({ idle: true });
@@ -278,6 +284,7 @@ describe("grow_loop tool runtime", () => {
     const harness = createHarness({ idle: true });
     await harness.executeTool("first");
     await waitFor(() => assert.equal(harness.sent.length, 1));
+    await harness.input(buildGrowLoopPrompt(), "extension");
     harness.state.idle = false;
     await harness.executeTool("second");
     await harness.agentSettled();
