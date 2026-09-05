@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.4: Worker Handoff Ownership Hotfix
+
+- `Worker Handoff`: Keeps canonical work-surface resolution and handoff fields with While True; Grow Loop locks user scope and decides whether to schedule another iteration from the returned evidence without duplicating discovery or worker analysis.
+
 ## 0.7.3: Turn-Scoped Iteration Hotfix
 
 - [Runtime] Keep repeated `grow_loop` calls within one agent turn bound to the same next iteration, replacing only the deferred delay instead of incrementing the visible loop number.

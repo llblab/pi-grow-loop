@@ -70,7 +70,9 @@ test("while-true batches independent tasks into one attributable validation coho
 
 test("grow-loop consumes the worker cohort handoff without reinterpreting batching", async () => {
   const meta = await readFile("skills/grow-loop/SKILL.md", "utf8");
-  assert.match(meta, /consume its handoff without redoing worker implementation analysis/);
+  assert.match(meta, /while-true.*alone resolves and validates the canonical open-work surface/);
+  assert.match(meta, /\[Handoff\]\(\.\.\/while-true\/SKILL\.md#handoff\)/);
+  assert.match(meta, /without redoing worker implementation analysis/);
   assert.match(meta, /evaluates the cohort handoff as one checkpoint/);
   assert.match(meta, /does not reinterpret its batching/);
   assert.doesNotMatch(meta, /GCFMOS|FMOS/);

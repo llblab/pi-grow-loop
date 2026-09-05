@@ -30,14 +30,9 @@ Natural routing into Grow Loop requires a concrete outcome or scope, a truthful 
 
 ## Scope Lock
 
-Select the user-focus scope in this order:
+Lock the project, directory, file, issue, task, or scoped outcome selected by the user. Conversation context may supply it only when it identifies the next safe slice precisely.
 
-1. Explicit project, directory, file, issue, or task selected by the user.
-2. An explicit scoped outcome that can be decomposed into a truthful canonical backlog.
-3. A canonical open-work surface explicitly declared by relevant project-local delivery instructions for that scope.
-4. The actively maintained open-work surface nearest that scope: `BACKLOG.md`, `PLAN.md`, `ROADMAP.md`, `TODO.md`, task list, or release checklist.
-5. Active docs, validation failure, or repository reality that defines concrete remaining work.
-6. Conversation context only when it identifies a safe next slice precisely.
+Pass that scope to `while-true`, which alone resolves and validates the canonical open-work surface, including any `Canonical open work:` declaration. Retain the surface returned in its handoff; do not run a second discovery algorithm here.
 
 Ignore unrelated repositories, temporary or generated directories, dependencies, caches, archives, and stale plans.
 
@@ -62,16 +57,7 @@ If a queued `while true | grow loop` prompt arrives after continuation-break int
 
 ## Continuation Checkpoint
 
-After one `while-true` invocation, consume its handoff without redoing worker implementation analysis:
-
-- Locked scope and canonical work surface.
-- Artifact or evidence produced.
-- Validation result and highest completed rung.
-- Plan-state transition.
-- Highest-value remaining item and actionability class.
-- Gate, blocker, and exact unblocker.
-- Checkpoint signature: selected cohort items, changed surfaces, per-task and shared validation results, blocker, and plan transitions.
-- Latest user intent.
+After one `while-true` invocation, consume its [Handoff](../while-true/SKILL.md#handoff) and checkpoint signature without redoing worker implementation analysis. Combine that evidence with the latest user intent; `while-true` owns the handoff fields, while this Skill owns the continuation decision.
 
 A useful invocation must change an artifact, increase validation confidence, narrow a blocker, improve plan truth, or remove a risky assumption. The worker may batch independent low-coupling tasks into one validation cohort; Grow Loop evaluates the cohort handoff as one checkpoint and does not reinterpret its batching. Otherwise treat the invocation as a possible no-op.
 
