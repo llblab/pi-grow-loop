@@ -144,18 +144,18 @@ The tool never blocks future calls. Whether to continue belongs to the agent and
 ## Runtime Statuses
 
 - No status — no active loop rhythm, or the operator took the turn.
-- `loop ∞N` warning — the next loop prompt is armed and waiting for idle/no pending messages.
-- `loop Ns` countdown — Pi is idle and the configured delay is running.
-- `loop ∞N` dim — the compact loop prompt was sent for this iteration.
+- `grow-loop ∞N` warning — the next loop prompt is armed and waiting for idle/no pending messages.
+- `grow-loop Ns` countdown — Pi is idle and the configured delay is running.
+- `grow-loop ∞N` dim — the compact loop prompt was sent for this iteration.
 
-`N` is monotonic within the current extension instance and advances only once when a turn arms its deferred successor. Repeated `grow_loop` calls before that turn ends retain `N`, replace the pending delay, and report that the iteration was already scheduled. Active status clears when the scheduled agent run fully settles without arming a successor, so automatic retry or compaction recovery does not produce a false idle state. There is no `loop stopped` or `loop paused` status; absence of loop status means the runtime rhythm is no longer active.
+`N` is monotonic within the current extension instance and advances only once when a turn arms its deferred successor. Repeated `grow_loop` calls before that turn ends retain `N`, replace the pending delay, and report that the iteration was already scheduled. Active status clears when the scheduled agent run fully settles without arming a successor, so automatic retry or compaction recovery does not produce a false idle state. There is no `grow-loop stopped` or `grow-loop paused` status; absence of Grow Loop status means the runtime rhythm is no longer active.
 
 ## Interruption Model
 
 Any user prompt except the scheduler's exact expected continuation prompt exits the active runtime rhythm. This includes operator input delivered through Telegram, RPC bridges, or other extensions:
 
 ```text
-Runtime: loop 3.0s or loop ∞2
+Runtime: grow-loop 3.0s or grow-loop ∞2
 User: What changed?
 Runtime: hides loop status and cancels pending scheduling
 Agent: answers, stops, changes direction, or later continues based on intent and context
@@ -193,7 +193,7 @@ Normal continuation:
 ```text
 User: grow loop
 Agent: closes one backlog slice, validates, reports evidence, calls grow_loop
-Runtime: loop ∞1 → loop 3.0s → while true | grow loop
+Runtime: grow-loop ∞1 → grow-loop 3.0s → while true | grow loop
 ```
 
 Terminal stop proof:

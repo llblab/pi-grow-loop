@@ -9,6 +9,7 @@ import type {
 import { Type } from "typebox";
 
 const STATUS_KEY = "pi-grow-loop";
+const STATUS_LABEL = "grow-loop";
 const DEFAULT_FOLLOW_UP_DELAY_MS = 3000;
 const DEFAULT_COUNTDOWN_TICK_MS = 100;
 const MIN_AFTER_SECONDS = 3;
@@ -42,7 +43,8 @@ function statusCountdown(ctx: ExtensionContext, seconds: number) {
   const theme = ctx.ui.theme;
   ctx.ui.setStatus(
     STATUS_KEY,
-    theme.fg("accent", "loop") + theme.fg("dim", ` ${seconds.toFixed(1)}s`),
+    theme.fg("accent", STATUS_LABEL) +
+      theme.fg("dim", ` ${seconds.toFixed(1)}s`),
   );
 }
 
@@ -50,7 +52,7 @@ function statusRunning(ctx: ExtensionContext, iteration: number) {
   const theme = ctx.ui.theme;
   ctx.ui.setStatus(
     STATUS_KEY,
-    theme.fg("accent", "loop") + theme.fg("dim", ` ∞${iteration}`),
+    theme.fg("accent", STATUS_LABEL) + theme.fg("dim", ` ∞${iteration}`),
   );
 }
 
@@ -58,7 +60,8 @@ function statusDeferred(ctx: ExtensionContext, iteration: number) {
   const theme = ctx.ui.theme;
   ctx.ui.setStatus(
     STATUS_KEY,
-    theme.fg("accent", "loop") + theme.fg("warning", ` ∞${iteration}`),
+    theme.fg("accent", STATUS_LABEL) +
+      theme.fg("warning", ` ∞${iteration}`),
   );
 }
 

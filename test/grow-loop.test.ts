@@ -121,7 +121,7 @@ describe("grow_loop tool runtime", () => {
         { content: "while true | grow loop", options: undefined },
       ]),
     );
-    assert.equal(harness.latestStatus(), "loop ∞1");
+    assert.equal(harness.latestStatus(), "grow-loop ∞1");
   });
   it("delays continuation by the requested after_seconds", async () => {
     const harness = createHarness({ idle: true });
@@ -150,14 +150,14 @@ describe("grow_loop tool runtime", () => {
     assert.equal(second.details.iteration, 2);
     await wait(25);
     assert.equal(harness.sent.length, 2);
-    assert.equal(harness.latestStatus(), "loop ∞2");
+    assert.equal(harness.latestStatus(), "grow-loop ∞2");
   });
   it("defers the grace countdown while user messages are pending", async () => {
     const harness = createHarness({ pending: true });
     await harness.executeTool();
     await wait(25);
     harness.assertNoPromptSent();
-    assert.equal(harness.latestStatus(), "loop ∞1");
+    assert.equal(harness.latestStatus(), "grow-loop ∞1");
     harness.state.pending = false;
     await wait(25);
     assert.deepEqual(harness.sent, [
@@ -169,7 +169,7 @@ describe("grow_loop tool runtime", () => {
     await harness.executeTool();
     await wait(25);
     harness.assertNoPromptSent();
-    assert.equal(harness.latestStatus(), "loop ∞1");
+    assert.equal(harness.latestStatus(), "grow-loop ∞1");
     harness.state.idle = true;
     await wait(25);
     assert.deepEqual(harness.sent, [
@@ -187,7 +187,7 @@ describe("grow_loop tool runtime", () => {
     );
     await wait(25);
     assert.equal(harness.sent.length, 1);
-    assert.equal(harness.latestStatus(), "loop ∞1");
+    assert.equal(harness.latestStatus(), "grow-loop ∞1");
   });
   it("user input clears pending work and hides status without blocking the tool", async () => {
     for (const prompt of [
@@ -219,7 +219,7 @@ describe("grow_loop tool runtime", () => {
     await harness.executeTool();
     await waitFor(() => assert.equal(harness.sent.length, 1));
     await harness.input(buildGrowLoopPrompt(), "extension");
-    assert.equal(harness.latestStatus(), "loop ∞1");
+    assert.equal(harness.latestStatus(), "grow-loop ∞1");
     await harness.input("What changed through the bridge?", "extension");
     assert.equal(harness.latestStatus(), undefined);
   });
@@ -230,7 +230,7 @@ describe("grow_loop tool runtime", () => {
     harness.state.idle = false;
     await wait(25);
     harness.assertNoPromptSent();
-    assert.equal(harness.latestStatus(), "loop ∞1");
+    assert.equal(harness.latestStatus(), "grow-loop ∞1");
     harness.state.idle = true;
     await waitFor(() =>
       assert.deepEqual(harness.sent, [
@@ -259,7 +259,7 @@ describe("grow_loop tool runtime", () => {
     assert.deepEqual(harness.sent, [
       { content: "while true | grow loop", options: undefined },
     ]);
-    assert.equal(harness.latestStatus(), "loop ∞1");
+    assert.equal(harness.latestStatus(), "grow-loop ∞1");
   });
   it("session shutdown cancels an already-created grace timeout and clears status", async () => {
     const harness = createHarness({ idle: true });
@@ -274,9 +274,9 @@ describe("grow_loop tool runtime", () => {
     const harness = createHarness({ idle: true });
     await harness.executeTool();
     await waitFor(() => assert.equal(harness.sent.length, 1));
-    assert.equal(harness.latestStatus(), "loop ∞1");
+    assert.equal(harness.latestStatus(), "grow-loop ∞1");
     await harness.agentEnd();
-    assert.equal(harness.latestStatus(), "loop ∞1");
+    assert.equal(harness.latestStatus(), "grow-loop ∞1");
     await harness.agentSettled();
     assert.equal(harness.latestStatus(), undefined);
   });
@@ -288,7 +288,7 @@ describe("grow_loop tool runtime", () => {
     harness.state.idle = false;
     await harness.executeTool("second");
     await harness.agentSettled();
-    assert.equal(harness.latestStatus(), "loop ∞2");
+    assert.equal(harness.latestStatus(), "grow-loop ∞2");
     await harness.shutdown();
   });
   it("clears pending grace-delay work and visible status on session shutdown", async () => {

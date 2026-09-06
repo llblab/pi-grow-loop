@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.5: Status Identity Hotfix
+
+- `Status Identity`: Labels deferred, countdown, and active runtime status as `grow-loop` instead of the ambiguous `loop`, matching the extension's public identity and the neighboring State Flow status convention.
+
 ## 0.7.4: Worker Handoff Ownership Hotfix
 
 - `Worker Handoff`: Keeps canonical work-surface resolution and handoff fields with While True; Grow Loop locks user scope and decides whether to schedule another iteration from the returned evidence without duplicating discovery or worker analysis.
