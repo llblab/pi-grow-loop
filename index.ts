@@ -71,9 +71,7 @@ export function getExistingExtensionSkillPaths(extensionUrl: string): string[] {
 }
 
 export function formatGrowLoopTelegramValue(progress: GrowLoopTelegramProgress): string {
-  if (progress.state === "countdown") return `#${progress.iteration} · ${(progress.remainingSeconds ?? 0).toFixed(1)}s`;
-  if (progress.state === "running") return `#${progress.iteration} · running`;
-  return `#${progress.iteration} · waiting`;
+  return `∞${progress.iteration}`;
 }
 
 async function registerGrowLoopTelegramStatus(
@@ -195,12 +193,8 @@ export default function growLoopExtension(
   };
   const telegramStatusProvider = (): GrowLoopTelegramStatusLine | undefined => {
     if (pendingIteration) {
-      if (pendingIteration.countdownStartedAt === undefined) {
-        return { label: "Grow Loop", value: formatGrowLoopTelegramValue({ iteration, state: "waiting" }) };
-      }
-      const elapsed = Date.now() - pendingIteration.countdownStartedAt;
-      const remainingSeconds = Math.max((pendingIteration.countdownDelayMs ?? 0) - elapsed, 0) / 1000;
-      return { label: "Grow Loop", value: formatGrowLoopTelegramValue({ iteration, state: "countdown", remainingSeconds }) };
+      const state = pendingIteration.countdownStartedAt === undefined ? "waiting" : "countdown";
+      return { label: "Grow Loop", value: formatGrowLoopTelegramValue({ iteration, state }) };
     }
     if (runningIteration !== undefined) {
       return { label: "Grow Loop", value: formatGrowLoopTelegramValue({ iteration: runningIteration, state: "running" }) };

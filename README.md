@@ -150,7 +150,7 @@ The tool never blocks future calls. Whether to continue belongs to the agent and
 
 `N` is monotonic within the current extension instance and advances only once when a turn arms its deferred successor. Repeated `grow_loop` calls before that turn ends retain `N`, replace the pending delay, and report that the iteration was already scheduled. Active status clears when the scheduled agent run fully settles without arming a successor, so automatic retry or compaction recovery does not produce a false idle state. There is no `grow-loop stopped` or `grow-loop paused` status; absence of Grow Loop status means the runtime rhythm is no longer active.
 
-With the optional `pi-telegram` extension installed, the Telegram Status screen mirrors the same rhythm and stays hidden whenever the terminal status is hidden: `Grow Loop: #N · waiting`, `#N · 2.4s` during the countdown, and `#N · running` while the loop-scheduled turn is active. The mirror reads the same runtime state, fails open without the transport, and changes no scheduling behavior.
+With the optional `pi-telegram` extension installed, the Telegram Status screen mirrors the same identity and stays hidden whenever the terminal status is hidden: `Grow Loop: ∞N` for the armed or running iteration, with no countdown or phase text. The mirror reads the same runtime state, fails open without the transport, and changes no scheduling behavior.
 
 ## Interruption Model
 

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.1: Telegram Status Text Hotfix
+
+- `Status Text`: The Telegram Status screen now copies the compact terminal identity exactly: `Grow Loop: ∞N` for the armed or running iteration, without countdown, phase, or separator text. The row still hides whenever the terminal status is hidden.
+
 ## 0.8.0: Telegram Status Mirror
 
 - `Telegram Mirror`: With the optional `pi-telegram` extension installed, the Telegram Status screen mirrors the same loop rhythm as the terminal status and hides with it: `Grow Loop: #N · waiting` while the next prompt is armed until idle, `#N · 2.4s` during the configured countdown, and `#N · running` while the loop-scheduled turn is active.

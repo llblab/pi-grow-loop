@@ -110,10 +110,10 @@ describe("grow-loop helpers", () => {
   it("builds the compact loop prompt", () => {
     assert.equal(buildGrowLoopPrompt(), "while true | grow loop");
   });
-  it("formats waiting, countdown, and running Telegram progress", () => {
+  it("formats one invariant Telegram loop value across phases", () => {
     assert.equal(
       formatGrowLoopTelegramValue({ iteration: 3, state: "waiting" }),
-      "#3 · waiting",
+      "∞3",
     );
     assert.equal(
       formatGrowLoopTelegramValue({
@@ -121,11 +121,11 @@ describe("grow-loop helpers", () => {
         state: "countdown",
         remainingSeconds: 2.44,
       }),
-      "#3 · 2.4s",
+      "∞3",
     );
     assert.equal(
       formatGrowLoopTelegramValue({ iteration: 3, state: "running" }),
-      "#3 · running",
+      "∞3",
     );
   });
 });
@@ -332,22 +332,19 @@ describe("grow_loop tool runtime", () => {
     harness.assertNoPromptSent();
     assert.equal(harness.latestStatus(), undefined);
   });
-  it("mirrors deferred, countdown, and running Telegram phases until settle", async () => {
+  it("mirrors the loop iteration until settle", async () => {
     const harness = createHarness({ idle: false });
     assert.equal(harness.telegramStatus(), undefined);
     await harness.executeTool();
     assert.deepEqual(harness.telegramStatus(), {
       label: "Grow Loop",
-      value: "#1 · waiting",
+      value: "∞1",
     });
     harness.state.idle = true;
-    await waitFor(() =>
-      assert.match(harness.telegramStatus()?.value ?? "", /^#1 · \d+\.\ds$/),
-    );
     await waitFor(() => assert.equal(harness.sent.length, 1));
     assert.deepEqual(harness.telegramStatus(), {
       label: "Grow Loop",
-      value: "#1 · running",
+      value: "∞1",
     });
     await harness.agentSettled();
     assert.equal(harness.telegramStatus(), undefined);
