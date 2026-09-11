@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.8.0: Telegram Status Mirror
+
+- `Telegram Mirror`: With the optional `pi-telegram` extension installed, the Telegram Status screen mirrors the same loop rhythm as the terminal status and hides with it: `Grow Loop: #N · waiting` while the next prompt is armed until idle, `#N · 2.4s` during the configured countdown, and `#N · running` while the loop-scheduled turn is active.
+- `Compatibility`: The mirror is optional and fail-open, reads the same runtime state, registers once, disposes on session shutdown, and changes no scheduling behavior; absence of the transport changes nothing.
+
 ## 0.7.5: Status Identity Hotfix
 
 - `Status Identity`: Labels deferred, countdown, and active runtime status as `grow-loop` instead of the ambiguous `loop`, matching the extension's public identity and the neighboring State Flow status convention.

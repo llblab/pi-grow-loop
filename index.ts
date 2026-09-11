@@ -14,16 +14,47 @@ const DEFAULT_FOLLOW_UP_DELAY_MS = 3000;
 const DEFAULT_COUNTDOWN_TICK_MS = 100;
 const MIN_AFTER_SECONDS = 3;
 const MAX_AFTER_SECONDS = 3600;
+const TELEGRAM_STATUS_IMPORT_SPECIFIERS = [
+  "@llblab/pi-telegram/status",
+  new URL("../pi-telegram/api/status.ts", import.meta.url).href,
+];
 
 type Timer = ReturnType<typeof setTimeout> & { unref?: () => void };
 type PendingIteration = {
   interval: Timer;
   timeout?: Timer;
+  countdownStartedAt?: number;
+  countdownDelayMs?: number;
 };
+
+export interface GrowLoopTelegramProgress {
+  iteration: number;
+  state: "waiting" | "countdown" | "running";
+  remainingSeconds?: number;
+}
+
+export interface GrowLoopTelegramStatusLine {
+  label: string;
+  value: string;
+}
+
+export type GrowLoopTelegramStatusProvider = () => GrowLoopTelegramStatusLine | undefined;
+export type GrowLoopTelegramStatusRegistrar = (
+  provider: GrowLoopTelegramStatusProvider,
+) => (() => void) | undefined;
+
+interface TelegramStatusLineModule {
+  registerTelegramStatusLineProvider?: (
+    provider: GrowLoopTelegramStatusProvider,
+    options: { id: string },
+  ) => () => void;
+}
 
 type GrowLoopOptions = {
   followUpDelayMs?: number;
   countdownTickMs?: number;
+  /** Injection seam for the optional pi-telegram status line; defaults to the public pi-telegram membrane. */
+  registerTelegramStatusLine?: GrowLoopTelegramStatusRegistrar;
 };
 
 export function buildGrowLoopPrompt(): string {
@@ -37,6 +68,28 @@ export function getExtensionSkillsDir(extensionUrl: string): string {
 export function getExistingExtensionSkillPaths(extensionUrl: string): string[] {
   const skillsDir = getExtensionSkillsDir(extensionUrl);
   return existsSync(skillsDir) ? [skillsDir] : [];
+}
+
+export function formatGrowLoopTelegramValue(progress: GrowLoopTelegramProgress): string {
+  if (progress.state === "countdown") return `#${progress.iteration} · ${(progress.remainingSeconds ?? 0).toFixed(1)}s`;
+  if (progress.state === "running") return `#${progress.iteration} · running`;
+  return `#${progress.iteration} · waiting`;
+}
+
+async function registerGrowLoopTelegramStatus(
+  provider: GrowLoopTelegramStatusProvider,
+): Promise<(() => void) | undefined> {
+  for (const specifier of TELEGRAM_STATUS_IMPORT_SPECIFIERS) {
+    try {
+      const imported = (await import(specifier)) as TelegramStatusLineModule;
+      if (typeof imported.registerTelegramStatusLineProvider === "function") {
+        return imported.registerTelegramStatusLineProvider(provider, { id: "@llblab/pi-grow-loop" });
+      }
+    } catch {
+      // pi-telegram is optional; its absence only disables the Telegram status line.
+    }
+  }
+  return undefined;
 }
 
 function statusCountdown(ctx: ExtensionContext, seconds: number) {
@@ -82,20 +135,21 @@ function scheduleIteration(
   iteration: number,
   clearPending: () => void,
   expectOwnPrompt: () => void,
-  options: Required<GrowLoopOptions>,
+  options: Required<Pick<GrowLoopOptions, "followUpDelayMs" | "countdownTickMs">>,
 ): PendingIteration {
-  let countdownStartedAt: number | undefined;
   statusDeferred(ctx, iteration);
   const pending = {} as PendingIteration;
   pending.interval = setInterval(() => {
-    if (!countdownStartedAt) {
+    if (pending.countdownStartedAt === undefined) {
       if (!ctx.isIdle() || ctx.hasPendingMessages()) return;
-      countdownStartedAt = Date.now();
+      pending.countdownStartedAt = Date.now();
+      pending.countdownDelayMs = options.followUpDelayMs;
       statusCountdown(ctx, options.followUpDelayMs / 1000);
       pending.timeout = setTimeout(() => {
         pending.timeout = undefined;
         if (!ctx.isIdle() || ctx.hasPendingMessages()) {
-          countdownStartedAt = undefined;
+          pending.countdownStartedAt = undefined;
+          pending.countdownDelayMs = undefined;
           statusDeferred(ctx, iteration);
           return;
         }
@@ -105,7 +159,7 @@ function scheduleIteration(
       pending.timeout.unref?.();
       return;
     }
-    const elapsed = Date.now() - countdownStartedAt;
+    const elapsed = Date.now() - pending.countdownStartedAt;
     const remainingMs = Math.max(options.followUpDelayMs - elapsed, 0);
     if (remainingMs > 0) statusCountdown(ctx, remainingMs / 1000);
   }, options.countdownTickMs) as Timer;
@@ -122,23 +176,63 @@ export default function growLoopExtension(
       partialOptions.followUpDelayMs ?? DEFAULT_FOLLOW_UP_DELAY_MS,
     countdownTickMs:
       partialOptions.countdownTickMs ?? DEFAULT_COUNTDOWN_TICK_MS,
+    registerTelegramStatusLine: partialOptions.registerTelegramStatusLine,
   };
   let iteration = 0;
   let lastCtx: ExtensionContext | undefined;
   let pendingIteration: PendingIteration | undefined;
   let ownPromptPending = false;
   let scheduledThisTurn = false;
+  let runningIteration: number | undefined;
+  let unregisterTelegramStatus: (() => void) | undefined;
+  let telegramRegistration: Promise<void> | undefined;
+  let telegramGeneration = 0;
   const clearPending = () => {
     if (!pendingIteration) return;
     if (pendingIteration.timeout) clearTimeout(pendingIteration.timeout);
     clearInterval(pendingIteration.interval);
     pendingIteration = undefined;
   };
+  const telegramStatusProvider = (): GrowLoopTelegramStatusLine | undefined => {
+    if (pendingIteration) {
+      if (pendingIteration.countdownStartedAt === undefined) {
+        return { label: "Grow Loop", value: formatGrowLoopTelegramValue({ iteration, state: "waiting" }) };
+      }
+      const elapsed = Date.now() - pendingIteration.countdownStartedAt;
+      const remainingSeconds = Math.max((pendingIteration.countdownDelayMs ?? 0) - elapsed, 0) / 1000;
+      return { label: "Grow Loop", value: formatGrowLoopTelegramValue({ iteration, state: "countdown", remainingSeconds }) };
+    }
+    if (runningIteration !== undefined) {
+      return { label: "Grow Loop", value: formatGrowLoopTelegramValue({ iteration: runningIteration, state: "running" }) };
+    }
+    return undefined;
+  };
+  const ensureTelegramStatusRegistered = () => {
+    if (unregisterTelegramStatus || telegramRegistration) return;
+    if (options.registerTelegramStatusLine) {
+      unregisterTelegramStatus = options.registerTelegramStatusLine(telegramStatusProvider) ?? undefined;
+      return;
+    }
+    const generation = telegramGeneration;
+    telegramRegistration = registerGrowLoopTelegramStatus(telegramStatusProvider)
+      .then((unregister) => {
+        if (generation !== telegramGeneration) {
+          unregister?.();
+          return;
+        }
+        unregisterTelegramStatus = unregister;
+      })
+      .finally(() => {
+        if (generation === telegramGeneration) telegramRegistration = undefined;
+      });
+  };
   const hideLoopStatus = (ctx: ExtensionContext) => {
     ownPromptPending = false;
+    runningIteration = undefined;
     clearPending();
     ctx.ui.setStatus(STATUS_KEY, undefined);
   };
+  ensureTelegramStatusRegistered();
   pi.on("resources_discover", async () => {
     const skillPaths = getExistingExtensionSkillPaths(import.meta.url);
     if (skillPaths.length === 0) return;
@@ -147,12 +241,23 @@ export default function growLoopExtension(
   pi.on("session_shutdown", async () => {
     ownPromptPending = false;
     scheduledThisTurn = false;
+    runningIteration = undefined;
     clearPending();
+    telegramGeneration += 1;
+    unregisterTelegramStatus?.();
+    unregisterTelegramStatus = undefined;
+    telegramRegistration = undefined;
     lastCtx?.ui.setStatus(STATUS_KEY, undefined);
+  });
+  pi.on("session_start", async () => {
+    ensureTelegramStatusRegistered();
   });
   pi.on("agent_settled", async (_event, ctx) => {
     lastCtx = ctx;
-    if (!pendingIteration) ctx.ui.setStatus(STATUS_KEY, undefined);
+    if (!pendingIteration) {
+      runningIteration = undefined;
+      ctx.ui.setStatus(STATUS_KEY, undefined);
+    }
   });
   pi.on("input", async (event, ctx) => {
     lastCtx = ctx;
@@ -194,6 +299,7 @@ export default function growLoopExtension(
     async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
       lastCtx = ctx;
       ownPromptPending = false;
+      runningIteration = undefined;
       clearPending();
       const isReschedule = scheduledThisTurn;
       if (!isReschedule) {
@@ -212,8 +318,9 @@ export default function growLoopExtension(
         clearPending,
         () => {
           ownPromptPending = true;
+          runningIteration = nextIteration;
         },
-        { ...options, followUpDelayMs: delayMs },
+        { followUpDelayMs: delayMs, countdownTickMs: options.countdownTickMs },
       );
       return {
         content: [

@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import { afterEach, describe, it, mock } from "node:test";
-import growLoopExtension, { buildGrowLoopPrompt } from "../index.ts";
+import growLoopExtension, {
+  buildGrowLoopPrompt,
+  formatGrowLoopTelegramValue,
+} from "../index.ts";
 
 function createHarness(options: { idle?: boolean; pending?: boolean } = {}) {
   const state = {
@@ -11,6 +14,7 @@ function createHarness(options: { idle?: boolean; pending?: boolean } = {}) {
   let tool: any;
   const sent: Array<{ content: string; options?: unknown }> = [];
   const statuses: Array<{ key: string; text: string | undefined }> = [];
+  let telegramProvider: (() => { label: string; value: string } | undefined) | undefined;
   const pi = {
     on(event: string, handler: Function) {
       handlers.set(event, handler);
@@ -40,7 +44,16 @@ function createHarness(options: { idle?: boolean; pending?: boolean } = {}) {
       return state.pending;
     },
   };
-  growLoopExtension(pi as any, { followUpDelayMs: 10, countdownTickMs: 5 });
+  growLoopExtension(pi as any, {
+    followUpDelayMs: 10,
+    countdownTickMs: 5,
+    registerTelegramStatusLine: (provider) => {
+      telegramProvider = provider;
+      return () => {
+        telegramProvider = undefined;
+      };
+    },
+  });
   const latestStatus = () => statuses.at(-1)?.text;
   const executeTool = (id = "tool", params: { after_seconds?: number } = {}) =>
     tool.execute(id, params, undefined, undefined, ctx);
@@ -58,6 +71,8 @@ function createHarness(options: { idle?: boolean; pending?: boolean } = {}) {
     ctx,
     state,
     latestStatus,
+    telegramStatus: () => telegramProvider?.(),
+    telegramRegistered: () => telegramProvider !== undefined,
     executeTool,
     input,
     shutdown,
@@ -94,6 +109,24 @@ afterEach(() => {
 describe("grow-loop helpers", () => {
   it("builds the compact loop prompt", () => {
     assert.equal(buildGrowLoopPrompt(), "while true | grow loop");
+  });
+  it("formats waiting, countdown, and running Telegram progress", () => {
+    assert.equal(
+      formatGrowLoopTelegramValue({ iteration: 3, state: "waiting" }),
+      "#3 · waiting",
+    );
+    assert.equal(
+      formatGrowLoopTelegramValue({
+        iteration: 3,
+        state: "countdown",
+        remainingSeconds: 2.44,
+      }),
+      "#3 · 2.4s",
+    );
+    assert.equal(
+      formatGrowLoopTelegramValue({ iteration: 3, state: "running" }),
+      "#3 · running",
+    );
   });
 });
 
@@ -298,5 +331,35 @@ describe("grow_loop tool runtime", () => {
     await wait(25);
     harness.assertNoPromptSent();
     assert.equal(harness.latestStatus(), undefined);
+  });
+  it("mirrors deferred, countdown, and running Telegram phases until settle", async () => {
+    const harness = createHarness({ idle: false });
+    assert.equal(harness.telegramStatus(), undefined);
+    await harness.executeTool();
+    assert.deepEqual(harness.telegramStatus(), {
+      label: "Grow Loop",
+      value: "#1 · waiting",
+    });
+    harness.state.idle = true;
+    await waitFor(() =>
+      assert.match(harness.telegramStatus()?.value ?? "", /^#1 · \d+\.\ds$/),
+    );
+    await waitFor(() => assert.equal(harness.sent.length, 1));
+    assert.deepEqual(harness.telegramStatus(), {
+      label: "Grow Loop",
+      value: "#1 · running",
+    });
+    await harness.agentSettled();
+    assert.equal(harness.telegramStatus(), undefined);
+    await harness.shutdown();
+  });
+  it("hides Telegram progress on user input and disposes on shutdown", async () => {
+    const harness = createHarness({ idle: true });
+    assert.equal(harness.telegramRegistered(), true);
+    await harness.executeTool();
+    await harness.input("stop");
+    assert.equal(harness.telegramStatus(), undefined);
+    await harness.shutdown();
+    assert.equal(harness.telegramRegistered(), false);
   });
 });

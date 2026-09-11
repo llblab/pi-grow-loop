@@ -1,6 +1,6 @@
 {
   "name": "@llblab/pi-grow-loop",
-  "version": "0.7.5",
+  "version": "0.8.0",
   "private": false,
   "description": "Semantic loop-engineering for agent-owned, visible, interruptible continuation in Pi",
   "keywords": [
