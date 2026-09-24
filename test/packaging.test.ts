@@ -3,7 +3,7 @@ import { access, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:f
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import test from "node:test";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { pathToFileURL } from "node:url";
 
 import {
   getExtensionSkillsDir,
@@ -72,6 +72,17 @@ test("Pi resolver distinguishes an auto checkout from a filtered package install
     const compiledUrl = pathToFileURL(compiledEntry).href;
     assert.equal(isRawExtensionCheckout(compiledUrl, { agentDir, cwd }), true);
     assert.equal(getExtensionSkillsDir(compiledUrl), sourceSkillRoot);
+    let resourceHook: (() => Promise<{ skillPaths: string[] } | undefined>) | undefined;
+    assert.equal(registerGrowLoopSkillDiscovery({
+      on(name: string, handler: () => Promise<{ skillPaths: string[] } | undefined>) {
+        assert.equal(name, "resources_discover");
+        resourceHook = handler;
+      },
+    } as unknown as Parameters<typeof registerGrowLoopSkillDiscovery>[0], compiledUrl, {
+      agentDir,
+      cwd,
+    }), true);
+    assert.deepEqual(await resourceHook?.(), { skillPaths: [sourceSkillRoot] });
 
     const managedRoot = join(root, "managed", "pi-grow-loop");
     await mkdir(dirname(join(managedRoot, "dist", "pi-grow-loop", "index.js")), { recursive: true });
@@ -211,48 +222,6 @@ test("grow-loop consumes the worker cohort handoff without reinterpreting batchi
   assert.match(meta, /does not reinterpret its batching/);
   assert.doesNotMatch(meta, /GCFMOS|FMOS/);
   assert.doesNotMatch(meta, /Relative path:|External reference:|Portfolio pointer:/);
-});
-
-test("only an auto-discovered checkout contributes source Skills dynamically", async () => {
-  const packageRoot = fileURLToPath(new URL("../", import.meta.url));
-  const checkoutOptions = {
-    agentDir: dirname(dirname(packageRoot)),
-    cwd: join(packageRoot, "unrelated-cwd"),
-  };
-  const sourceUrl = new URL("../index.ts", import.meta.url).href;
-  const compiledUrl = new URL("../dist/index.js", import.meta.url).href;
-  let resourceHook: (() => Promise<{ skillPaths: string[] } | undefined>) | undefined;
-  const pi = {
-    on(name: string, handler: () => Promise<{ skillPaths: string[] } | undefined>) {
-      assert.equal(name, "resources_discover");
-      resourceHook = handler;
-    },
-  };
-
-  assert.equal(isRawExtensionCheckout(sourceUrl, checkoutOptions), true);
-  assert.equal(isRawExtensionCheckout(compiledUrl, checkoutOptions), true);
-  assert.equal(registerGrowLoopSkillDiscovery(
-    pi as unknown as Parameters<typeof registerGrowLoopSkillDiscovery>[0],
-    compiledUrl,
-    checkoutOptions,
-  ), true);
-  assert.deepEqual(await resourceHook?.(), {
-    skillPaths: [join(packageRoot, "skills")],
-  });
-  assert.equal(getExtensionSkillsDir(compiledUrl), join(packageRoot, "skills"));
-
-  resourceHook = undefined;
-  const managedOptions = {
-    agentDir: join(packageRoot, "managed-agent"),
-    cwd: join(packageRoot, "managed-cwd"),
-  };
-  assert.equal(isRawExtensionCheckout(compiledUrl, managedOptions), false);
-  assert.equal(registerGrowLoopSkillDiscovery(
-    pi as unknown as Parameters<typeof registerGrowLoopSkillDiscovery>[0],
-    compiledUrl,
-    managedOptions,
-  ), false);
-  assert.equal(resourceHook, undefined);
 });
 
 test("compiled and source runtimes resolve the optional Telegram sibling from their own depth", () => {
