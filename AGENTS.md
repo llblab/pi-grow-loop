@@ -33,12 +33,14 @@
 ## Topology
 
 ```text
-index.ts                  optionally delayed grow_loop tool
-skills/grow-loop/SKILL.md meta-loop protocol
-skills/while-true/SKILL.md worker-loop protocol baseline
-README.md                 human entrypoint
-BACKLOG.md                open work
-CHANGELOG.md              completed delivery history
+index.ts                       source-checkout composition root
+dist/pi-grow-loop/index.js     packaged compiled entrypoint
+dist/skills                    packaged Skill root
+skills/grow-loop/SKILL.md      meta-loop protocol
+skills/while-true/SKILL.md     worker-loop protocol baseline
+README.md                      human entrypoint
+BACKLOG.md                     open work
+CHANGELOG.md                   completed delivery history
 ```
 
 ## Evolution Path
@@ -51,6 +53,8 @@ CHANGELOG.md              completed delivery history
 
 ## Style
 
+- Manifest-loaded packages expose bundled Skills only through `pi.skills`, preserving package filters and package-owned provenance. Only a checkout auto-discovered directly below a user or project Pi `extensions/` root may contribute its source Skill root through `resources_discover`; compiled-vs-source filename shape does not determine ownership.
+- Keep `dist/` synchronized and committed after source changes because Pi git-package installation does not run the npm `prepack` lifecycle. Run `npm run build` to atomically replace it; validation uses `build:check` to reject drift without rewriting the working tree, while npm publication rebuilds the same tree.
 - Prefer small, inspectable TypeScript over framework or actor dependencies.
 - Use concise operator copy.
 - Keep prompt contracts explicit and bounded.

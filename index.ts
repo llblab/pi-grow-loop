@@ -1,6 +1,7 @@
 import { existsSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { homedir } from "node:os";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 import type {
   ExtensionAPI,
@@ -14,10 +15,7 @@ const DEFAULT_FOLLOW_UP_DELAY_MS = 3000;
 const DEFAULT_COUNTDOWN_TICK_MS = 100;
 const MIN_AFTER_SECONDS = 3;
 const MAX_AFTER_SECONDS = 3600;
-const TELEGRAM_STATUS_IMPORT_SPECIFIERS = [
-  "@llblab/pi-telegram/status",
-  new URL("../pi-telegram/api/status.ts", import.meta.url).href,
-];
+const TELEGRAM_STATUS_IMPORT_SPECIFIERS = getTelegramStatusImportSpecifiers(import.meta.url);
 
 type Timer = ReturnType<typeof setTimeout> & { unref?: () => void };
 type PendingIteration = {
@@ -61,13 +59,74 @@ export function buildGrowLoopPrompt(): string {
   return "while true | grow loop";
 }
 
+export function getAgentDir(
+  env: Record<string, string | undefined> = process.env,
+): string {
+  return env.PI_CODING_AGENT_DIR
+    ? resolve(env.PI_CODING_AGENT_DIR)
+    : join(homedir(), ".pi", "agent");
+}
+
+export function getExtensionPackageRoot(extensionUrl: string): string {
+  let current = dirname(fileURLToPath(extensionUrl));
+  while (true) {
+    if (existsSync(join(current, "package.json"))) return current;
+    const parent = dirname(current);
+    if (parent === current) return dirname(fileURLToPath(extensionUrl));
+    current = parent;
+  }
+}
+
+export interface RawExtensionCheckoutOptions {
+  agentDir?: string;
+  cwd?: string;
+}
+
+export function isRawExtensionCheckout(
+  extensionUrl: string,
+  options: RawExtensionCheckoutOptions = {},
+): boolean {
+  const packageRoot = resolve(getExtensionPackageRoot(extensionUrl));
+  const agentDir = resolve(options.agentDir ?? getAgentDir());
+  const cwd = resolve(options.cwd ?? process.cwd());
+  return dirname(packageRoot) === join(agentDir, "extensions") ||
+    dirname(packageRoot) === join(cwd, ".pi", "extensions");
+}
+
 export function getExtensionSkillsDir(extensionUrl: string): string {
-  return join(dirname(fileURLToPath(extensionUrl)), "skills");
+  return join(getExtensionPackageRoot(extensionUrl), "skills");
 }
 
 export function getExistingExtensionSkillPaths(extensionUrl: string): string[] {
   const skillsDir = getExtensionSkillsDir(extensionUrl);
   return existsSync(skillsDir) ? [skillsDir] : [];
+}
+
+export function getTelegramStatusImportSpecifiers(extensionUrl: string): string[] {
+  const siblingPath = join(
+    dirname(getExtensionPackageRoot(extensionUrl)),
+    "pi-telegram",
+    "api",
+    "status.ts",
+  );
+  return [
+    "@llblab/pi-telegram/status",
+    pathToFileURL(siblingPath).href,
+  ];
+}
+
+export function registerGrowLoopSkillDiscovery(
+  pi: Pick<ExtensionAPI, "on">,
+  extensionUrl = import.meta.url,
+  options: RawExtensionCheckoutOptions = {},
+): boolean {
+  if (!isRawExtensionCheckout(extensionUrl, options)) return false;
+  pi.on("resources_discover", async () => {
+    const skillPaths = getExistingExtensionSkillPaths(extensionUrl);
+    if (skillPaths.length === 0) return;
+    return { skillPaths };
+  });
+  return true;
 }
 
 export function formatGrowLoopTelegramValue(progress: GrowLoopTelegramProgress): string {
@@ -227,11 +286,7 @@ export default function growLoopExtension(
     ctx.ui.setStatus(STATUS_KEY, undefined);
   };
   ensureTelegramStatusRegistered();
-  pi.on("resources_discover", async () => {
-    const skillPaths = getExistingExtensionSkillPaths(import.meta.url);
-    if (skillPaths.length === 0) return;
-    return { skillPaths };
-  });
+  registerGrowLoopSkillDiscovery(pi);
   pi.on("session_shutdown", async () => {
     ownPromptPending = false;
     scheduledThisTurn = false;

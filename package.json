@@ -1,6 +1,6 @@
 {
   "name": "@llblab/pi-grow-loop",
-  "version": "0.8.1",
+  "version": "0.8.2",
   "private": false,
   "description": "Semantic loop-engineering for agent-owned, visible, interruptible continuation in Pi",
   "keywords": [
@@ -26,16 +26,20 @@
     "node": ">=22.19.0"
   },
   "scripts": {
-    "check": "node --experimental-strip-types -e \"await import('./index.ts'); console.log('pi-grow-loop: extension import ok')\"",
+    "check": "node -e \"await import('./dist/pi-grow-loop/index.js'); console.log('pi-grow-loop: extension import ok')\"",
     "typecheck": "tsc --noEmit",
     "test": "node --experimental-strip-types --test test/*.test.ts",
     "audit": "npm audit --omit=peer",
+    "build": "node scripts/build-dist.mjs",
+    "build:check": "node scripts/build-dist.mjs --check",
     "pack:dry": "npm pack --dry-run",
-    "validate": "npm run test && npm run typecheck && npm run check && npm run audit && npm run pack:dry"
+    "validate": "npm run build:check && npm run test && npm run typecheck && npm run check && npm run audit && npm run pack:dry",
+    "prepack": "npm run build"
   },
   "files": [
     "banner.jpg",
     "index.ts",
+    "dist",
     "skills",
     "README.md",
     "AGENTS.md",
@@ -44,13 +48,10 @@
   ],
   "pi": {
     "extensions": [
-      "./index.ts"
+      "./dist/pi-grow-loop/index.js"
     ],
     "skills": [
-      "./skills"
-    ],
-    "sourceSkills": [
-      "./skills"
+      "./dist/skills"
     ],
     "image": "https://raw.githubusercontent.com/llblab/pi-grow-loop/main/banner.jpg"
   },

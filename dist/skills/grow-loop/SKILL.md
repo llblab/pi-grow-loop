@@ -1,0 +1,117 @@
+---
+name: grow-loop
+description: Meta-protocol for autonomous, scope-locked continuation through visible bounded worker iterations. Use when the user explicitly names `grow-loop`, or when no protocol is named and a concrete scoped outcome benefits from multiple independently useful, validated slices with operator-visible continuation checkpoints. Existing plans are optional, and an explicit scoped outcome may bootstrap a canonical backlog. Do not activate for an explicit standalone `while-true` request, ordinary one-shot work with one natural validation boundary, informational answers, unrelated plans, or work with no safe actionable or preparable slice.
+---
+
+# Grow Loop
+
+Own one decision: after a bounded `while-true` worker invocation, either schedule exactly one next visible invocation with `grow_loop` or stop with proof.
+
+```text
+lock scope → run one worker invocation → consume handoff → decide once
+  ├─ continue: call grow_loop once, then end the turn
+  └─ stop: do not call grow_loop; return proof
+```
+
+Do not own implementation details. `while-true` owns one portable worker pass; `grow_loop` owns only idle-deferred runtime scheduling.
+
+There is no goal object, budget, cycle count, hidden process, background agent, or slash-command control surface. For generic prompts such as `go`, `continue`, or `do it`, infer intent from context; explicit protocol names remain exact overrides.
+
+## Entrypoint Routing
+
+Apply lexical intent before execution-shape inference:
+
+- Explicit standalone `while-true` selects only the portable worker. Do not activate Grow Loop or call `grow_loop` from its handoff unless the user later requests Grow Loop continuation.
+- Explicit `grow-loop` selects this meta-protocol.
+- The combined `while true | grow loop` prompt is reserved for internal continuation of an already selected Grow Loop sequence.
+- When no protocol is named, use ordinary one-shot execution for a coherent change even when it needs multiple internal steps. Use Grow Loop for a concrete outcome that benefits from multiple independently validated slices, plan reconciliation, and operator-visible checkpoints.
+
+Natural routing into Grow Loop requires a concrete outcome or scope, a truthful backlog that exists or can be bootstrapped, safe actionable or preparable work, and no one-shot instruction. The distinction is the value of independent checkpoint boundaries, not task size, keyword matching, or a confirmation ritual. Routing happens before invoking `while-true`; the worker never escalates itself.
+
+## Scope Lock
+
+Lock the project, directory, file, issue, task, or scoped outcome selected by the user. Conversation context may supply it only when it identifies the next safe slice precisely.
+
+Pass that scope to `while-true`, which alone resolves and validates the canonical open-work surface, including any `Canonical open work:` declaration. Retain the surface returned in its handoff; do not run a second discovery algorithm here.
+
+Ignore unrelated repositories, temporary or generated directories, dependencies, caches, archives, and stale plans.
+
+Keep the selected scope and declared work-surface ownership stable across iterations. Re-select only when the user redirects the work or verified reality proves another surface governs the same scope. A stale or moved declaration requires repair or an explicit ambiguity stop, not harvesting other available work to preserve momentum.
+
+If no trustworthy scope exists, do not invoke the worker or call `grow_loop`; request the smallest missing input.
+
+## Intent Precedence
+
+Interpret the latest context in this order:
+
+1. Latest user direction or change of scope.
+2. Explicit continuation-break intent or durable stop marker.
+3. Worker evidence, safety gates, and blockers.
+4. Remaining backlog availability.
+
+Any user prompt except the runtime's exact expected continuation prompt exits the runtime rhythm and is authoritative context, including operator input injected through another extension. Decide whether it means answer, stop, restart, continue, or change direction; do not infer continuation from backlog availability alone.
+
+Escape remains baseline Pi behavior, not a Grow Loop control. Treat it as a continuation break only when session context exposes that intent or a durable stop marker.
+
+If a queued `while true | grow loop` prompt arrives after continuation-break intent, do no repository work, run no validation for momentum, and do not call `grow_loop`. Acknowledge the break and provide the current stop proof when useful. Resume only after explicit restart intent clears the stop context.
+
+## Continuation Checkpoint
+
+After one `while-true` invocation, consume its [Handoff](../while-true/SKILL.md#handoff) and checkpoint signature without redoing worker implementation analysis. Combine that evidence with the latest user intent; `while-true` owns the handoff fields, while this Skill owns the continuation decision.
+
+A useful invocation must change an artifact, increase validation confidence, narrow a blocker, improve plan truth, or remove a risky assumption. The worker may batch independent low-coupling tasks into one validation cohort; Grow Loop evaluates the cohort handoff as one checkpoint and does not reinterpret its batching. Otherwise treat the invocation as a possible no-op.
+
+Compare the checkpoint signature with the previous invocation. A repeated signature with only unchanged reads, checks, or blocker restatement is terminal no-op evidence.
+
+## Decide Once
+
+### Continue
+
+Continue only when every condition holds:
+
+- Latest user intent permits continuation and no stop marker is active.
+- The locked scope and canonical work surface remain trustworthy.
+- The previous invocation produced useful evidence.
+- A high-value `local-actionable` or useful `gated-but-preparable` slice remains.
+- Continuing crosses no destructive, publishing, credential, account, external, or approval gate.
+- The checkpoint signature is not a repeated no-op.
+- Validation has not regressed enough to require a strategy change or human decision.
+
+Approval- or externally gated scopes may continue only through safe preparation that materially reduces future risk. Stop when preparation is exhausted; never cross the gate.
+
+When all conditions hold, call `grow_loop` exactly once, then end the turn. Omit `after_seconds` for the default 3-second operator-interrupt delay, or increase it from 3 up to 3600 when continuation should wait for known asynchronous work. Never shorten the 3-second minimum because it preserves the operator's chance to redirect the next iteration. Choose a longer delay from concrete evidence about expected remaining duration, use the one-hour limit only for genuinely long-running work, and reassess after every wake so the next delay tracks the latest state rather than mechanically repeating the previous value. The tool waits until Pi is idle with no pending messages, shows the configured countdown, and sends the next visible `while true | grow loop` prompt only if the session remains idle.
+
+### Stop
+
+Stop and do not call `grow_loop` when any condition holds:
+
+- User intent means stop, answer, wait, or change direction.
+- Scope is missing, ambiguous, redirected, or untrustworthy.
+- Work is complete or no high-value actionable or preparable slice remains.
+- Remaining work is gated and useful preparation is complete.
+- The checkpoint signature repeats.
+- Validation requires a strategy change or human decision.
+- Continuing would be unsafe, destructive, speculative, or outside scope.
+
+Stopping with exact evidence is progress. Do not schedule speculatively and do not call `grow_loop` more than once per decision.
+
+## Stop Proof
+
+Return a compact terminal handoff:
+
+- Locked scope and what was closed or narrowed.
+- Validation or evidence proving the state.
+- Terminal checkpoint signature in concise form.
+- What remains done, gated, or non-actionable.
+- Exact input or state change that would make restart useful, if any.
+
+## Invariants
+
+1. Scope remains locked until user intent or verified reality changes it.
+2. `while-true` owns worker execution; Grow Loop consumes its handoff and owns continuation only.
+3. User intent outranks repository availability.
+4. Each checkpoint produces one decision and at most one `grow_loop` call.
+5. Safe preparation may approach a gate but never cross it.
+6. Repeated no-op evidence stops the loop.
+7. No trustworthy scope or evidence means no continuation.
+8. Explicit protocol naming overrides automatic routing; the worker never self-escalates.

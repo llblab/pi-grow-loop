@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+## 0.8.2: Filterable Skills and drift-safe Git installs
+
+- `Filterable Packaged Skills`: Manifest-loaded installs leave both bundled Skills to `pi.skills`, preserving filters and package provenance. Auto-discovered checkouts contribute source Skills even when Pi selects compiled code; filename shape no longer misclassifies ownership, and unsupported source manifest aliases are removed.
+- `Drift-Safe Distribution`: Ships the compiled entrypoint and Skill tree for npm/git installs, builds through a temporary candidate plus rollback-safe swap, and makes validation reject any committed `dist` drift without silently repairing it. Package filters that named source paths must target the new `dist/pi-grow-loop/index.js` and `dist/skills` paths.
+
 ## 0.8.1: Telegram Status Text Hotfix
 
 - `Status Text`: The Telegram Status screen now copies the compact terminal identity exactly: `Grow Loop: ∞N` for the armed or running iteration, without countdown, phase, or separator text. The row still hides whenever the terminal status is hidden.

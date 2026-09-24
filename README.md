@@ -22,6 +22,8 @@ Or install from git:
 pi install git:github.com/llblab/pi-grow-loop
 ```
 
+Manifest-loaded packages load the compiled extension and bundled Skills through the package manifest, so Pi resource filters and package provenance remain authoritative. A checkout auto-discovered directly under Pi's user or project extensions directory contributes its source Skills for local development even when Pi selects the checkout's compiled entrypoint. Existing package filters that name resource paths should use `dist/pi-grow-loop/index.js` and `dist/skills`; filters by Skill name remain unchanged.
+
 Then focus Pi on trustworthy open work or provide a concrete multi-slice outcome and ask for continuation:
 
 ```text
